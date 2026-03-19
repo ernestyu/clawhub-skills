@@ -1,7 +1,32 @@
 ---
 name: clawhealth-garmin
-description: Lightweight Garmin Connect skill that fetches clawhealth from GitHub, syncs health data into local SQLite, and exposes JSON-friendly commands for OpenClaw.
-metadata: {"openclaw":{"requires":{"bins":["python"]},"homepage":"https://github.com/ernestyu/clawhealth","tags":["health","garmin","sqlite","cli"]}}
+description: Lightweight Garmin Connect skill that fetches the clawhealth source from GitHub, syncs health data into local SQLite, and exposes JSON-friendly commands for OpenClaw.
+version: 0.1.2
+metadata:
+  openclaw:
+    homepage: "https://github.com/ernestyu/clawhealth"
+    tags:
+      - health
+      - garmin
+      - sqlite
+      - cli
+    requires:
+      bins:
+        - python3
+      anyBins:
+        - python
+      env:
+        - CLAWHEALTH_GARMIN_USERNAME
+        - CLAWHEALTH_GARMIN_PASSWORD_FILE
+        - CLAWHEALTH_DB
+        - CLAWHEALTH_CONFIG_DIR
+        - CLAWHEALTH_SRC_DIR
+        - CLAWHEALTH_REPO_URL
+        - CLAWHEALTH_REPO_REF
+        - CLAWHEALTH_AUTO_FETCH
+        - CLAWHEALTH_AUTO_BOOTSTRAP
+        - CLAWHEALTH_TMP_DIR
+    primaryEnv: CLAWHEALTH_GARMIN_PASSWORD
 ---
 
 # clawhealth-garmin (OpenClaw Skill)
@@ -39,7 +64,7 @@ includes the required Python dependencies:
 
 ## Setup
 
-1) Create `{baseDir}/.env` (see `{baseDir}/ENV.example`).
+1) Create `{baseDir}/.env` (see `{baseDir}/ENV_EXAMPLE.md`).
 
 Recommended: use `CLAWHEALTH_GARMIN_PASSWORD_FILE` (password file) rather than
 `CLAWHEALTH_GARMIN_PASSWORD` (plaintext env var).
@@ -63,8 +88,12 @@ Notes:
 
 - Only `src/clawhealth` is downloaded into `{baseDir}/clawhealth_src` by default.
 - Override with `CLAWHEALTH_SRC_DIR`, `CLAWHEALTH_REPO_URL`, `CLAWHEALTH_REPO_REF`.
-- `run_clawhealth.py` will auto-fetch the source if missing (controlled by `CLAWHEALTH_AUTO_FETCH`).
-- `run_clawhealth.py` will auto-bootstrap if deps are missing (controlled by `CLAWHEALTH_AUTO_BOOTSTRAP`).
+- `CLAWHEALTH_AUTO_FETCH=1` allows `run_clawhealth.py` to download the required
+  `src/clawhealth` source automatically if it is missing.
+- `CLAWHEALTH_AUTO_BOOTSTRAP=1` allows `run_clawhealth.py` to install missing
+  local Python dependencies automatically if required.
+- For stricter environments, set these variables to `0` and run
+  `fetch_src.py` / `bootstrap_deps.py` manually before use.
 - `run_clawhealth.py` will automatically re-exec into `{baseDir}/.venv` if present.
 - If temp dir permissions fail, set `CLAWHEALTH_TMP_DIR` to a writable path.
 
