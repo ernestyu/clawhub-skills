@@ -1,7 +1,7 @@
 ---
 name: clawhealth-garmin
 description: Lightweight Garmin Connect skill that fetches the clawhealth source from GitHub, syncs health data into local SQLite, and exposes JSON-friendly commands for OpenClaw.
-version: 0.1.2
+version: 0.1.3
 metadata:
   openclaw:
     homepage: "https://github.com/ernestyu/clawhealth"
@@ -26,17 +26,23 @@ metadata:
         - CLAWHEALTH_AUTO_FETCH
         - CLAWHEALTH_AUTO_BOOTSTRAP
         - CLAWHEALTH_TMP_DIR
-    primaryEnv: CLAWHEALTH_GARMIN_PASSWORD
+    primaryEnv: CLAWHEALTH_GARMIN_PASSWORD_FILE
 ---
 
 # clawhealth-garmin (OpenClaw Skill)
 
-This skill connects to Garmin Connect, syncs health data into a local SQLite
-DB, and exposes JSON-friendly commands that OpenClaw agents can call.
+Sync your Garmin Connect health data into a local SQLite database
+and expose it as structured JSON for OpenClaw agents.
 
-This is a **lightweight** skill package: it does **not** bundle the `clawhealth`
-source code. Instead, it downloads only the required `src/clawhealth` folder
-from GitHub at install/runtime.
+Your agent can then query things like:
+
+- "How did I sleep yesterday?"
+- "What is my HRV trend this week?"
+- "Am I overtraining?"
+
+This is a **thin wrapper skill**:
+it does not include the full source code, and will fetch the required
+`clawhealth` module from GitHub when needed.
 
 ## What It Does
 
@@ -236,18 +242,6 @@ python {baseDir}/run_clawhealth.py garmin trend-summary --days 7 --json
 
 Override with `CLAWHEALTH_CONFIG_DIR` and `CLAWHEALTH_DB`.
 
-## Publish Validation
-
-```bash
-python {baseDir}/validate_skill.py
-python {baseDir}/test_minimal.py
-```
-
-Optional real-account integration test:
-
-```bash
-CLAWHEALTH_RUN_INTEGRATION_TESTS=1 python {baseDir}/test_integration_optional.py
-```
 
 ## Security
 
