@@ -50,9 +50,6 @@ def main() -> int:
         print("Creating venv at", venv_dir)
         venv.EnvBuilder(with_pip=True).create(venv_dir)
 
-    print("Upgrading pip/setuptools/wheel")
-    _run([str(vpy), "-m", "pip", "install", "-U", "pip", "setuptools", "wheel"])
-
     print("Installing dependencies:", ", ".join(REQS))
     _run([str(vpy), "-m", "pip", "install", *REQS])
 
