@@ -1,7 +1,7 @@
 ---
 name: clawhealth-garmin
 description: Lightweight Garmin Connect skill that fetches the clawhealth source from GitHub, syncs health data into local SQLite, and exposes JSON-friendly commands for OpenClaw.
-version: 0.1.5
+version: 0.1.6
 metadata:
   openclaw:
     homepage: "https://github.com/ernestyu/clawhealth"
