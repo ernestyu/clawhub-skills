@@ -32,7 +32,9 @@ def _read_frontmatter(text: str) -> dict[str, str]:
 def _parse_manifest(path: Path) -> dict[str, object]:
     data: dict[str, object] = {}
     lines = path.read_text(encoding="utf-8").splitlines()
-    non_empty = [ln.strip() for ln in lines if ln.strip() and not ln.strip().startswith("#")]
+    non_empty = [
+        ln.strip() for ln in lines if ln.strip() and not ln.strip().startswith("#")
+    ]
     if len(non_empty) == 1:
         # Inline format: "name: x version: y ..."
         line = non_empty[0]
@@ -95,7 +97,7 @@ def _src_ready(src_dir: Path) -> bool:
 def main() -> int:
     base_dir = Path(__file__).resolve().parent
     skill_md = base_dir / "SKILL.md"
-    env_example = base_dir / "ENV.example"
+    env_example = base_dir / "ENV_EXAMPLE.md"
     runner = base_dir / "run_clawhealth.py"
     publish_doc = base_dir / "PUBLISH.md"
     bootstrap = base_dir / "bootstrap_deps.py"
@@ -104,7 +106,7 @@ def main() -> int:
     fetch_src = base_dir / "fetch_src.py"
 
     _require(skill_md.exists(), "SKILL.md not found")
-    _require(env_example.exists(), "ENV.example not found")
+    _require(env_example.exists(), "ENV_EXAMPLE.md not found")
     _require(runner.exists(), "run_clawhealth.py not found")
     _require(publish_doc.exists(), "PUBLISH.md not found")
     _require(bootstrap.exists(), "bootstrap_deps.py not found")
@@ -117,7 +119,10 @@ def main() -> int:
     for key in ("name", "version", "description", "author", "license", "entry"):
         _require(key in mf, f"manifest.yaml missing '{key}'")
     version = str(mf.get("version", "")).strip()
-    _require(bool(SEMVER_RE.match(version)), "manifest.yaml version must be semver (e.g. 0.1.0)")
+    _require(
+        bool(SEMVER_RE.match(version)),
+        "manifest.yaml version must be semver (e.g. 0.1.0)",
+    )
 
     # Validate SKILL.md frontmatter
     text = skill_md.read_text(encoding="utf-8")
@@ -128,14 +133,22 @@ def main() -> int:
     _require("metadata" in fm, "frontmatter missing 'metadata'")
 
     metadata_raw = fm["metadata"]
-    try:
-        metadata = json.loads(metadata_raw)
-    except json.JSONDecodeError as exc:
-        raise ValueError("frontmatter 'metadata' must be valid single-line JSON") from exc
+    if isinstance(metadata_raw, dict):
+        metadata = metadata_raw
+    else:
+        try:
+            metadata = json.loads(metadata_raw)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                "frontmatter 'metadata' must be a YAML mapping or valid single-line JSON"
+            ) from exc
 
     requires = metadata.get("openclaw", {}).get("requires", {})
     bins = requires.get("bins", [])
-    _require(isinstance(bins, list) and "python" in bins, "metadata requires bins must include 'python'")
+    _require(
+        isinstance(bins, list) and "python" in bins,
+        "metadata requires bins must include 'python'",
+    )
 
     # Basic sanity check: run CLI help if src is available (or allow auto-fetch)
     validate_with_fetch = _truthy(os.environ.get("CLAWHEALTH_VALIDATE_WITH_FETCH"))
@@ -151,7 +164,9 @@ def main() -> int:
         )
         _require(proc.returncode == 0, "CLI help failed to run via run_clawhealth.py")
     else:
-        print("SKIP: clawhealth src not present; set CLAWHEALTH_VALIDATE_WITH_FETCH=1 to allow auto-fetch.")
+        print(
+            "SKIP: clawhealth src not present; set CLAWHEALTH_VALIDATE_WITH_FETCH=1 to allow auto-fetch."
+        )
 
     print("OK: Skill validation passed")
     return 0
