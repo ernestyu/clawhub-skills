@@ -1,7 +1,7 @@
 ---
 name: clawhealth-garmin
 description: Lightweight Garmin Connect skill that fetches the clawhealth source from GitHub, syncs health data into local SQLite, and exposes JSON-friendly commands for OpenClaw.
-version: 0.1.4
+version: 0.1.5
 metadata:
   openclaw:
     homepage: "https://github.com/ernestyu/clawhealth"
@@ -20,13 +20,18 @@ metadata:
         - CLAWHEALTH_GARMIN_PASSWORD_FILE
         - CLAWHEALTH_DB
         - CLAWHEALTH_CONFIG_DIR
-        - CLAWHEALTH_SRC_DIR
-        - CLAWHEALTH_REPO_URL
-        - CLAWHEALTH_REPO_REF
-        - CLAWHEALTH_AUTO_FETCH
-        - CLAWHEALTH_AUTO_BOOTSTRAP
-        - CLAWHEALTH_TMP_DIR
-    primaryEnv: CLAWHEALTH_GARMIN_PASSWORD_FILE
+      primaryEnv: CLAWHEALTH_GARMIN_PASSWORD_FILE
+    install:
+      - id: clawhealth_setup
+        kind: shell
+        label: "Fetch clawhealth src and bootstrap dependencies"
+        script: |
+          set -e
+          cd {baseDir}
+          # Fetch src/clawhealth into {baseDir}/clawhealth_src
+          python fetch_src.py
+          # Create .venv and install garth/garminconnect into it
+          python bootstrap_deps.py
 ---
 
 # clawhealth-garmin (OpenClaw Skill)

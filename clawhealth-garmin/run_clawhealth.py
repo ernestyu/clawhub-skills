@@ -135,23 +135,17 @@ def _src_ready(src_dir: Path) -> bool:
 
 
 def _ensure_src_or_exit(base_dir: Path, argv: list[str]) -> Path:
+    """Ensure clawhealth src is present under {baseDir}/clawhealth_src.
+
+    This function no longer auto-fetches source code at runtime.
+    ClawHub (or the user) is expected to run fetch_src.py once at install time.
+    """
+
     src_dir = _src_dir(base_dir)
     if _src_ready(src_dir):
         return src_dir
 
-    allow_auto = _truthy(os.environ.get("CLAWHEALTH_AUTO_FETCH", "1"))
-    allow_in_docker = _truthy(os.environ.get("CLAWHEALTH_AUTO_FETCH_IN_DOCKER", "0"))
     likely_docker = _in_docker()
-
-    if allow_auto and (not likely_docker or allow_in_docker):
-        script = base_dir / "fetch_src.py"
-        if script.exists():
-            cmd = [sys.executable, str(script)]
-            if _truthy(os.environ.get("CLAWHEALTH_SRC_REFRESH")):
-                cmd.append("--refresh")
-            proc = subprocess.run(cmd)
-            if proc.returncode == 0 and _src_ready(src_dir):
-                return src_dir
 
     msg_lines = [
         "clawhealth source not found.",
@@ -159,15 +153,13 @@ def _ensure_src_or_exit(base_dir: Path, argv: list[str]) -> Path:
         "Fix:",
         f"- Run: {sys.executable} {base_dir / 'fetch_src.py'}",
     ]
-    if likely_docker:
-        msg_lines.append("- In Docker, allow auto-fetch with CLAWHEALTH_AUTO_FETCH_IN_DOCKER=1 if desired.")
 
     payload = {
         "ok": False,
         "error_code": "SRC_MISSING",
         "src_dir": str(src_dir),
         "likely_docker": likely_docker,
-        "auto_fetch_enabled": bool(allow_auto),
+        "auto_fetch_enabled": False,
         "message": "\n".join(msg_lines),
     }
 
@@ -189,19 +181,18 @@ def _required_modules(argv: list[str]) -> list[str]:
 
 
 def _audit_env_or_exit(base_dir: Path, argv: list[str]) -> None:
+    """Ensure required Python deps (garminconnect/garth) are present.
+
+    Runtime no longer auto-installs these dependencies. They should be
+    bootstrapped once at install time via bootstrap_deps.py (e.g. through
+    ClawHub's metadata.openclaw.install hook).
+    """
+
     missing = _missing_deps(_required_modules(argv))
     if not missing:
         return
 
     likely_docker = _in_docker()
-    allow_auto = _truthy(os.environ.get("CLAWHEALTH_AUTO_BOOTSTRAP", "1"))
-    allow_in_docker = _truthy(os.environ.get("CLAWHEALTH_AUTO_BOOTSTRAP_IN_DOCKER", "0"))
-
-    # Auto bootstrap: enabled by default for non-Docker installs. For Docker,
-    # default is to print guidance and recommend a patched image.
-    if allow_auto and (not likely_docker or allow_in_docker):
-        if _bootstrap_deps(base_dir):
-            _exec_into_venv(base_dir)
 
     msg_lines = [
         "Missing Python dependencies: " + ", ".join(missing),
@@ -210,14 +201,13 @@ def _audit_env_or_exit(base_dir: Path, argv: list[str]) -> None:
     ]
     if likely_docker:
         msg_lines.append("- If you are using the official OpenClaw Docker image, consider switching to 'ernestyu/openclaw-patched'.")
-        msg_lines.append("- To auto-bootstrap inside Docker (not recommended), set CLAWHEALTH_AUTO_BOOTSTRAP_IN_DOCKER=1.")
 
     payload = {
         "ok": False,
         "error_code": "ENV_MISSING_DEP",
         "missing": missing,
         "likely_docker": likely_docker,
-        "auto_bootstrap_enabled": bool(allow_auto),
+        "auto_bootstrap_enabled": False,
         "message": "\n".join(msg_lines),
     }
 
