@@ -1,69 +1,61 @@
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 
 
-def _venv_python(base_dir: Path) -> Path:
-    venv = base_dir / ".venv"
-    if os.name == "nt":
-        return venv / "Scripts" / "python.exe"
-    return venv / "bin" / "python"
-
-
-def _reexec_into_venv_if_present(base_dir: Path) -> None:
-    if os.environ.get("CLAWHEALTH_USE_VENV", "1") not in ("1", "true", "True", "yes", "YES"):
-        return
-    vpy = _venv_python(base_dir)
-    if not vpy.exists():
-        return
-    # If we're already running inside the venv, no-op.
-    try:
-        if Path(sys.executable).resolve() == vpy.resolve():
-            return
-    except Exception:
-        pass
-    os.execv(str(vpy), [str(vpy), str(Path(__file__).resolve()), *sys.argv[1:]])
-
-
 def _load_env(path: Path) -> None:
+    """Load key=value pairs from a simple .env file if present.
+
+    This is deliberately minimal and only used to wire credentials and
+    configuration for the skill. It does not override existing env vars.
+    """
+
     if not path.exists():
         return
+
     try:
-        with path.open("r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, value = line.split("=", 1)
-                key = key.strip()
-                value = value.strip().strip('"').strip("'")
-                if key:
-                    os.environ.setdefault(key, value)
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
     except Exception:
-        # Best-effort only; do not block execution.
+        # Best-effort only; do not block execution if .env has issues.
         return
 
 
 def _set_skill_defaults(base_dir: Path) -> None:
+    """Set default config/db locations under the skill directory.
+
+    This keeps clawhealth's config and SQLite DB scoped to this skill
+    folder unless the user overrides them via env vars.
+    """
+
     config_dir = base_dir / "config"
     db_path = base_dir / "data" / "health.db"
     os.environ.setdefault("CLAWHEALTH_CONFIG_DIR", str(config_dir))
     os.environ.setdefault("CLAWHEALTH_DB", str(db_path))
-    os.environ.setdefault("CLAWHEALTH_SRC_DIR", str(base_dir / "clawhealth_src"))
 
 
 def _resolve_env_paths_relative_to_skill(base_dir: Path) -> None:
-    # OpenClaw may invoke this script with a CWD that is not the skill folder.
-    # Treat relative paths in env vars as relative to the skill directory.
+    """Resolve relative paths in env vars against the skill directory.
+
+    OpenClaw may invoke this script with a CWD that is not the skill folder.
+    For paths like `./garmin_pass.txt`, we treat them as relative to
+    `{baseDir}`.
+    """
+
     for key in (
         "CLAWHEALTH_GARMIN_PASSWORD_FILE",
         "CLAWHEALTH_CONFIG_DIR",
         "CLAWHEALTH_DB",
-        "CLAWHEALTH_SRC_DIR",
     ):
         raw = os.environ.get(key)
         if not raw:
@@ -78,169 +70,37 @@ def _resolve_env_paths_relative_to_skill(base_dir: Path) -> None:
             continue
 
 
-def _in_docker() -> bool:
-    try:
-        if Path("/.dockerenv").exists():
-            return True
-        cgroup = Path("/proc/1/cgroup")
-        if cgroup.exists():
-            txt = cgroup.read_text(encoding="utf-8", errors="ignore")
-            return any(x in txt for x in ("docker", "kubepods", "containerd"))
-    except Exception:
-        return False
-    return False
+def main() -> int:
+    """Entry point for the clawhealth-garmin skill.
 
-
-def _missing_deps(mods: list[str]) -> list[str]:
-    missing: list[str] = []
-    for mod in mods:
-        try:
-            __import__(mod)
-        except Exception:
-            missing.append(mod)
-    return missing
-
-
-def _truthy(v: str | None) -> bool:
-    return (v or "").strip() in ("1", "true", "True", "yes", "YES", "on", "ON")
-
-
-def _bootstrap_deps(base_dir: Path) -> bool:
-    """Best-effort dependency bootstrap into {baseDir}/.venv."""
-    import subprocess
-
-    script = base_dir / "bootstrap_deps.py"
-    if not script.exists():
-        return False
-    proc = subprocess.run([sys.executable, str(script)])
-    return proc.returncode == 0
-
-
-def _exec_into_venv(base_dir: Path) -> None:
-    vpy = _venv_python(base_dir)
-    if not vpy.exists():
-        return
-    os.execv(str(vpy), [str(vpy), str(Path(__file__).resolve()), *sys.argv[1:]])
-
-
-def _src_dir(base_dir: Path) -> Path:
-    raw = os.environ.get("CLAWHEALTH_SRC_DIR")
-    if raw:
-        return Path(raw).resolve()
-    return (base_dir / "clawhealth_src").resolve()
-
-
-def _src_ready(src_dir: Path) -> bool:
-    return (src_dir / "clawhealth" / "cli.py").exists()
-
-
-def _ensure_src_or_exit(base_dir: Path, argv: list[str]) -> Path:
-    """Ensure clawhealth src is present under {baseDir}/clawhealth_src.
-
-    This function no longer auto-fetches source code at runtime.
-    ClawHub (or the user) is expected to run fetch_src.py once at install time.
+    This script wires environment/configuration and then delegates to the
+    `clawhealth` CLI, which is provided by the `clawhealth` Python package
+    installed via pip (see SKILL.md install section).
     """
 
-    src_dir = _src_dir(base_dir)
-    if _src_ready(src_dir):
-        return src_dir
-
-    likely_docker = _in_docker()
-
-    msg_lines = [
-        "clawhealth source not found.",
-        f"Expected src at: {src_dir}",
-        "Fix:",
-        f"- Run: {sys.executable} {base_dir / 'fetch_src.py'}",
-    ]
-
-    payload = {
-        "ok": False,
-        "error_code": "SRC_MISSING",
-        "src_dir": str(src_dir),
-        "likely_docker": likely_docker,
-        "auto_fetch_enabled": False,
-        "message": "\n".join(msg_lines),
-    }
-
-    if "--json" in argv:
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-    else:
-        sys.stderr.write(payload["message"] + "\n")
-    raise SystemExit(2)
-
-
-def _required_modules(argv: list[str]) -> list[str]:
-    if not argv:
-        return []
-    if argv[0] == "garmin":
-        garmin_cmd = argv[1] if len(argv) >= 2 else ""
-        if garmin_cmd not in ("status", "trend-summary", "flags"):
-            return ["garminconnect", "garth"]
-    return []
-
-
-def _audit_env_or_exit(base_dir: Path, argv: list[str]) -> None:
-    """Ensure required Python deps (garminconnect/garth) are present.
-
-    Runtime no longer auto-installs these dependencies. They should be
-    bootstrapped once at install time via bootstrap_deps.py (e.g. through
-    ClawHub's metadata.openclaw.install hook).
-    """
-
-    missing = _missing_deps(_required_modules(argv))
-    if not missing:
-        return
-
-    likely_docker = _in_docker()
-
-    msg_lines = [
-        "Missing Python dependencies: " + ", ".join(missing),
-        "Fix:",
-        f"- Run: {sys.executable} {base_dir / 'bootstrap_deps.py'}",
-    ]
-    if likely_docker:
-        msg_lines.append("- If you are using the official OpenClaw Docker image, consider switching to 'ernestyu/openclaw-patched'.")
-
-    payload = {
-        "ok": False,
-        "error_code": "ENV_MISSING_DEP",
-        "missing": missing,
-        "likely_docker": likely_docker,
-        "auto_bootstrap_enabled": False,
-        "message": "\n".join(msg_lines),
-    }
-
-    if "--json" in argv:
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-    else:
-        sys.stderr.write(payload["message"] + "\n")
-    raise SystemExit(2)
-
-
-def main(argv: list[str] | None = None) -> int:
     base_dir = Path(__file__).resolve().parent
-    _reexec_into_venv_if_present(base_dir)
+
+    # 1) Load .env if present (credentials, DB/config overrides, etc.)
     _load_env(base_dir / ".env")
+
+    # 2) Set default config/db locations under the skill directory
     _set_skill_defaults(base_dir)
+
+    # 3) Resolve relative paths (e.g. ./garmin_pass.txt) against the skill dir
     _resolve_env_paths_relative_to_skill(base_dir)
 
+    # 4) Delegate to the installed `clawhealth` CLI
     try:
-        src_dir = _ensure_src_or_exit(base_dir, argv or sys.argv[1:])
-        sys.path.insert(0, str(src_dir))
-        _audit_env_or_exit(base_dir, argv or sys.argv[1:])
-        from clawhealth.cli import main as clawhealth_main
-    except Exception as exc:  # noqa: BLE001
+        result = subprocess.run(["clawhealth", *sys.argv[1:]])
+        return result.returncode
+    except FileNotFoundError:
         sys.stderr.write(
-            "clawhealth source or dependencies are missing.\n"
-            "Run bootstrap once:\n"
-            f"  {sys.executable} {base_dir / 'bootstrap_deps.py'}\n"
+            "Error: 'clawhealth' CLI not found.\n"
+            "Please install the 'clawhealth' Python package, for example:\n"
+            "  python -m pip install clawhealth\n"
         )
-        sys.stderr.write(f"Import error: {exc}\n")
-        return 2
-
-    return clawhealth_main(argv or sys.argv[1:])
+        return 127
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())

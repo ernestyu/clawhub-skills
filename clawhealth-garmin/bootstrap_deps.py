@@ -7,11 +7,13 @@ import venv
 from pathlib import Path
 
 
-REQS = [
-    "garminconnect>=0.2.1,<0.3.0",
-    "garth>=0.5.0,<0.6.0",
-]
+# For the ClawHub skill we no longer fetch source code. Instead we
+# install the published `clawhealth` package into a local .venv so that
+# the `clawhealth` CLI is available for `run_clawhealth.py`.
 
+REQS = [
+    "clawhealth>=0.1.1",
+]
 
 
 def _venv_python(base_dir: Path) -> Path:
@@ -27,43 +29,22 @@ def _run(cmd: list[str]) -> None:
         raise SystemExit(proc.returncode)
 
 
-def _truthy(v: str | None) -> bool:
-    return (v or "").strip() in ("1", "true", "True", "yes", "YES", "on", "ON")
-
-
-def _ensure_src(base_dir: Path) -> None:
-    script = base_dir / "fetch_src.py"
-    if not script.exists():
-        raise SystemExit("fetch_src.py not found; cannot download clawhealth src")
-    cmd = [sys.executable, str(script)]
-    if _truthy(os.environ.get("CLAWHEALTH_SRC_REFRESH")):
-        cmd.append("--refresh")
-    _run(cmd)
-
-
 def main() -> int:
     base_dir = Path(__file__).resolve().parent
     venv_dir = base_dir / ".venv"
     vpy = _venv_python(base_dir)
 
     if not vpy.exists():
-        print("Creating venv at", venv_dir)
+        print("[clawhealth-garmin] Creating venv at", venv_dir)
         venv.EnvBuilder(with_pip=True).create(venv_dir)
 
-    print("Upgrading pip/setuptools/wheel")
-    _run([str(vpy), "-m", "pip", "install", "-U", "pip", "setuptools", "wheel"])
-
-    print("Installing dependencies:", ", ".join(REQS))
+    print("[clawhealth-garmin] Installing dependencies:", ", ".join(REQS))
     _run([str(vpy), "-m", "pip", "install", *REQS])
 
-    print("Fetching clawhealth src (if missing)")
-    _ensure_src(base_dir)
-
-    print("OK: dependencies installed. Run the skill with:")
-    print(f"  {sys.executable} {base_dir / 'run_clawhealth.py'} --help")
-    print("Tip: run_clawhealth.py will re-exec into .venv automatically.")
+    print("[clawhealth-garmin] OK: clawhealth installed in .venv.")
+    print("[clawhealth-garmin] The skill entrypoint (run_clawhealth.py) will use the installed CLI.")
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
