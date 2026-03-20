@@ -60,7 +60,7 @@ git repositories are fetched by this skill.
 After installation, agents can invoke the CLI from this directory as:
 
 ```bash
-node node_modules/clawfetch/clawfetch.js <url> [--max-comments N] [--no-reddit-rss] [--auto-install]
+node node_modules/clawfetch/clawfetch.js <url> [--max-comments N] [--no-reddit-rss]
 ```
 
 Recommended patterns:

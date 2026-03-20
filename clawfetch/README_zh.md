@@ -107,7 +107,7 @@ npm install clawfetch@0.1.3
 
 ```bash
 cd ~/.openclaw/workspace/skills/clawfetch
-node node_modules/clawfetch/clawfetch.js <url> [--max-comments N] [--no-reddit-rss] [--auto-install]
+node node_modules/clawfetch/clawfetch.js <url> [--max-comments N] [--no-reddit-rss]
 ```
 
 常见用法：

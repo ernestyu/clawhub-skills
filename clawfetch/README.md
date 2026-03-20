@@ -109,7 +109,7 @@ After installation, the CLI entrypoint lives under the skill directory:
 
 ```bash
 cd ~/.openclaw/workspace/skills/clawfetch
-node node_modules/clawfetch/clawfetch.js <url> [--max-comments N] [--no-reddit-rss] [--auto-install]
+node node_modules/clawfetch/clawfetch.js <url> [--max-comments N] [--no-reddit-rss]
 ```
 
 Typical patterns:
