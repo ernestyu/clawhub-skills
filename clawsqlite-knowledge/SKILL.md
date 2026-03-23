@@ -56,8 +56,14 @@ subprocess.run(cmd)
 The Skill itself will not:
 
 * clone any git repository;
-* install undeclared extra packages during installation;
-* write outside the working directory during runtime.
+* install undeclared extra packages during installation.
+
+Note: The underlying `clawsqlite` CLI **will** read and write files under the
+configured knowledge storage directory (SQLite DB file + markdown articles).
+This Skill forwards the optional `root` field in the payload directly to the
+CLI (mapped to `--root`), so callers control where those files live. In
+ClawHub deployments, this is expected to be a dedicated data directory for
+this skill.
 
 ---
 
@@ -96,7 +102,7 @@ Ingest an article from a URL. The actual fetching logic is determined by the env
   "category": "web",                                   // optional (default: web)
   "tags": "wechat,ground-station",                     // optional
   "gen_provider": "openclaw",                          // optional: openclaw|llm|off (default: openclaw)
-  "root": "/home/node/.openclaw/workspace/knowledge_root"  // optional
+  "root": "/data/clawsqlite-knowledge"  // optional storage directory
 }
 ```
 
@@ -134,7 +140,7 @@ Ingest a piece of text, an idea, or an excerpt, marked as a local source (`sourc
   "category": "idea",                              // optional (default: note)
   "tags": "crawler,architecture",                  // optional
   "gen_provider": "openclaw",                      // optional
-  "root": "/home/node/.../knowledge_root"          // optional
+  "root": "/data/clawsqlite-knowledge"          // optional storage directory
 }
 ```
 
@@ -160,7 +166,7 @@ Search the knowledge base by keyword, vector, or hybrid retrieval.
   "category": "idea",             // optional
   "tag": "crawler",               // optional
   "include_deleted": false,       // optional
-  "root": "/home/node/.../knowledge_root"   // optional
+  "root": "/data/clawsqlite-knowledge"   // optional storage directory
 }
 ```
 
@@ -194,7 +200,7 @@ Show one record from the knowledge base by id, optionally including full content
   "action": "show",
   "id": 3,
   "full": true,                   // optional, default: true
-  "root": "/home/node/.../knowledge_root"   // optional
+  "root": "/data/clawsqlite-knowledge"   // optional storage directory
 }
 ```
 
@@ -213,7 +219,7 @@ Preview one maintenance pass. It checks orphan files, backups, and path issues, 
 {
   "action": "maintenance_preview",
   "days": 3,                      // optional, backup retention days
-  "root": "/home/node/.../knowledge_root"   // optional
+  "root": "/data/clawsqlite-knowledge"   // optional storage directory
 }
 ```
 
@@ -236,7 +242,7 @@ Apply one maintenance cleanup pass (use with care).
 {
   "action": "maintenance_apply",
   "days": 7,
-  "root": "/home/node/.../knowledge_root"
+  "root": "/data/clawsqlite-knowledge"
 }
 ```
 
