@@ -145,48 +145,11 @@ def handle_show(payload: Dict[str, Any]) -> Dict[str, Any]:
     return _run_knowledge_cli(args)
 
 
-def handle_maintenance_preview(payload: Dict[str, Any]) -> Dict[str, Any]:
-    days = int(payload.get("days", 3))
-    root = payload.get("root")
-
-    args: list[str] = [
-        "maintenance",
-        "gc",
-        "--days",
-        str(days),
-        "--dry-run",
-        "--json",
-    ]
-    if root:
-        args += ["--root", root]
-
-    return _run_knowledge_cli(args)
-
-
-def handle_maintenance_apply(payload: Dict[str, Any]) -> Dict[str, Any]:
-    days = int(payload.get("days", 3))
-    root = payload.get("root")
-
-    args: list[str] = [
-        "maintenance",
-        "gc",
-        "--days",
-        str(days),
-        "--json",
-    ]
-    if root:
-        args += ["--root", root]
-
-    return _run_knowledge_cli(args)
-
-
 HANDLERS = {
     "ingest_url": handle_ingest_url,
     "ingest_text": handle_ingest_text,
     "search": handle_search,
     "show": handle_show,
-    "maintenance_preview": handle_maintenance_preview,
-    "maintenance_apply": handle_maintenance_apply,
 }
 
 

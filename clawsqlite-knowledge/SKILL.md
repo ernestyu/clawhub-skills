@@ -209,49 +209,33 @@ Show one record from the knowledge base by id, optionally including full content
 * calls `clawsqlite knowledge show --id ... --full --json`;
 * returns full metadata and optional body content (the `content` field).
 
-### 5. `maintenance_preview`
+---
 
-Preview one maintenance pass. It checks orphan files, backups, and path issues, but does not modify anything.
+## Maintenance (CLI only)
 
-**Example payload:**
+This skill intentionally does **not** expose destructive maintenance actions
+via its JSON API. To clean up orphan files, old backups, or compact the
+knowledge database, use the `clawsqlite` CLI directly from a trusted
+administrative context, for example:
 
-```json
-{
-  "action": "maintenance_preview",
-  "days": 3,                      // optional, backup retention days
-  "root": "/data/clawsqlite-knowledge"   // optional storage directory
-}
+```bash
+# Preview maintenance (no deletions)
+clawsqlite knowledge maintenance gc \
+  --root /data/clawsqlite-knowledge \
+  --days 3 \
+  --dry-run \
+  --json
+
+# Apply maintenance (delete orphans + old backups, then VACUUM)
+clawsqlite knowledge maintenance gc \
+  --root /data/clawsqlite-knowledge \
+  --days 7 \
+  --json
 ```
 
-**Behavior:**
-
-* calls `clawsqlite knowledge maintenance gc --days N --dry-run --json`;
-* reports:
-
-  * `orphans`: files on disk with no DB record;
-  * `bak_to_delete`: `.bak_YYYYMMDD` files older than the retention window;
-  * `broken_records`: DB records that point to missing paths.
-
-### 6. `maintenance_apply`
-
-Apply one maintenance cleanup pass (use with care).
-
-**Example payload:**
-
-```json
-{
-  "action": "maintenance_apply",
-  "days": 7,
-  "root": "/data/clawsqlite-knowledge"
-}
-```
-
-**Behavior:**
-
-* calls `clawsqlite knowledge maintenance gc --days N --json`;
-* deletes `orphans + bak_to_delete`;
-* runs one `VACUUM` through plumbing to compact the database;
-* returns the deleted items and status.
+Only administrators or scheduled automation should run these commands. Agents
+using the `clawsqlite-knowledge` skill have access only to ingestion,
+retrieval, and show operations.
 
 ---
 
@@ -259,5 +243,4 @@ Apply one maintenance cleanup pass (use with care).
 
 * The Skill depends only on the `clawsqlite` package from PyPI;
 * it does not vendor source code, does not git clone, and does not download extra binaries;
-* all knowledge base operations are performed through explicit `clawsqlite knowledge ...` CLI calls, and their `stdout/stderr` can be fully audited in logs;
-* heavy operations such as `maintenance_apply` should be called only by administrators or scheduled automation tasks, not triggered frequently in ordinary conversation.
+* all knowledge base operations are performed through explicit `clawsqlite knowledge ...` CLI calls, and their `stdout/stderr` can be fully audited in logs.
