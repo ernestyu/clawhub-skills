@@ -1,42 +1,42 @@
 ---
 name: clawsqlite-knowledge
 description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/maintenance.
-version: 0.1.1
+version: 0.1.2
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}
 ---
 
 # clawsqlite-knowledge (OpenClaw Skill)
 
-`clawsqlite-knowledge` 是一个围绕 PyPI 包 **clawsqlite** 构建的知识库 Skill。
+`clawsqlite-knowledge` is a knowledge base Skill built around the PyPI package **clawsqlite**.
 
-它是一个**薄包装**：
+It is a **thin wrapper**:
 
-- 不 vendor 源码，不 git clone 任何仓库；
-- 安装阶段只做一件事：`pip install clawsqlite>=0.1.0`；
-- 运行阶段只通过 `clawsqlite knowledge ...` CLI 操作知识库。
+- it does not vendor the source code and does not git clone any repository;
+- during installation, it does only one thing: `pip install clawsqlite>=0.1.0`;
+- during runtime, it operates the knowledge base only through the `clawsqlite knowledge ...` CLI.
 
-主要能力集中在三类：
+Its main capabilities are grouped into three areas:
 
-1. **入库**
-   - 从 URL 入库（结合现有抓取工具，例如 clawfetch）；
-   - 从一段文本/想法/摘抄入库（标记为本地来源）。
-2. **检索**
-   - 混合检索（hybrid/FTS/vec 自动退级）
-   - 按 id 查看完整记录（含全文）。
-3. **维护**
-   - 预览孤儿文件 / 备份 / 路径问题；
-   - 应用一次清理 + VACUUM。
+1. **Ingestion**
+   - ingest from a URL (together with an existing fetch tool such as clawfetch);
+   - ingest from a piece of text, an idea, or an excerpt (marked as a local source).
+2. **Retrieval**
+   - hybrid retrieval (hybrid / FTS / vec with automatic fallback)
+   - show a full record by id (including full content).
+3. **Maintenance**
+   - preview orphan files, backups, and path issues;
+   - apply one cleanup pass plus VACUUM.
 
 ---
 
-## 安装（由 ClawHub / OpenClaw 执行）
+## Installation (performed by ClawHub / OpenClaw)
 
-前提：
+Prerequisites:
 
-- Skill 运行环境中有 Python 3.10+；
-- 可以访问 PyPI 安装 `clawsqlite` 包。
+- Python 3.10+ is available in the Skill runtime environment;
+- the environment can access PyPI to install the `clawsqlite` package.
 
-安装步骤由 `manifest.yaml` 声明：
+The installation steps are declared by `manifest.yaml`:
 
 ```yaml
 install:
@@ -44,33 +44,33 @@ install:
     kind: python
     label: Install clawsqlite from PyPI
     script: bootstrap_deps.py
-```
+````
 
-`bootstrap_deps.py` 的内容很简单，可以全文审计：
+The content of `bootstrap_deps.py` is intentionally simple and can be audited in full:
 
 ```python
 cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.0"]
 subprocess.run(cmd)
 ```
 
-Skill 自身不会：
+The Skill itself will not:
 
-- 克隆任何 git 仓库；
-- 在安装过程中安装未声明的额外包；
-- 在运行阶段写入非工作目录。
+* clone any git repository;
+* install undeclared extra packages during installation;
+* write outside the working directory during runtime.
 
 ---
 
-## 运行时入口
+## Runtime entry
 
-Skill runtime 会调用 `run_clawknowledge.py`，该脚本：
+The Skill runtime calls `run_clawknowledge.py`. This script:
 
-- 从 stdin 读取一个 JSON payload；
-- 根据 `action` 字段路由到对应的 handler；
-- 调用 `python -m clawsqlite_cli knowledge ...` 完成实际操作；
-- 把结果 JSON 写回 stdout。
+* reads a JSON payload from stdin;
+* routes by the `action` field to the matching handler;
+* calls `python -m clawsqlite_cli knowledge ...` to perform the actual operation;
+* writes the result JSON back to stdout.
 
-所有调用都集中在一个函数中：
+All CLI calls are centralized in one function:
 
 ```python
 cmd = [sys.executable, "-m", "clawsqlite_cli", "knowledge"] + args
@@ -79,38 +79,39 @@ subprocess.run(cmd, cwd=...)
 
 ---
 
-## 支持的 action
+## Supported actions
 
 ### 1. `ingest_url`
 
-从 URL 入库一篇文章。抓取逻辑由环境中的 `CLAWSQLITE_SCRAPE_CMD`
-（推荐使用 clawfetch CLI）决定，本 Skill 不直接抓网页。
+Ingest an article from a URL. The actual fetching logic is determined by the environment variable `CLAWSQLITE_SCRAPE_CMD`
+(recommended: the clawfetch CLI). This Skill does not fetch web pages directly.
 
-**Payload 示例：**
+**Example payload:**
 
 ```json
 {
   "action": "ingest_url",
   "url": "https://mp.weixin.qq.com/s/UzgKeQwWWoV4v884l_jcrg",
-  "title": "微信文章: Ground Station 项目",      // 可选
-  "category": "web",                           // 可选（默认 web）
-  "tags": "wechat,ground-station",            // 可选
-  "gen_provider": "openclaw",                 // 可选：openclaw|llm|off（默认 openclaw）
-  "root": "/home/node/.openclaw/workspace/knowledge_root"  // 可选
+  "title": "WeChat article: Ground Station project",   // optional
+  "category": "web",                                   // optional (default: web)
+  "tags": "wechat,ground-station",                     // optional
+  "gen_provider": "openclaw",                          // optional: openclaw|llm|off (default: openclaw)
+  "root": "/home/node/.openclaw/workspace/knowledge_root"  // optional
 }
 ```
 
-**行为：**
+**Behavior:**
 
-- 调用 `clawsqlite knowledge ingest --url ...`；
-- 默认通过 `provider=openclaw`：
-  - 用 heuristic 生成长摘要（前 ~800 字，按句子/段落截断）；
-  - 用 jieba/轻量算法生成标签；
-  - 在 embedding 配置完整时，为长摘要生成向量写入 vec 表；
-- 文件名使用拼音 + 英文 slug，易于跨平台存储；
-- DB 中保留原始中文标题和 source_url。
+* calls `clawsqlite knowledge ingest --url ...`;
+* by default uses `provider=openclaw`:
 
-**返回：**
+  * generates a long summary with heuristics (first ~800 characters, cut by sentence/paragraph boundaries);
+  * generates tags with jieba or a lightweight algorithm;
+  * if embedding configuration is complete, generates an embedding for the long summary and stores it in the vec table;
+* filenames use pinyin plus an English slug for easier cross-platform storage;
+* the database keeps the original Chinese title and `source_url`.
+
+**Returns:**
 
 ```json
 {
@@ -121,56 +122,56 @@ subprocess.run(cmd, cwd=...)
 
 ### 2. `ingest_text`
 
-从一段文本/想法/摘抄入库，标记为本地来源（source = Local）。
+Ingest a piece of text, an idea, or an excerpt, marked as a local source (`source = Local`).
 
-**Payload 示例：**
+**Example payload:**
 
 ```json
 {
   "action": "ingest_text",
-  "text": "今天想到一个关于网络抓取架构的想法...",
-  "title": "网络抓取架构随记",      // 可选，不给则自动生成
-  "category": "idea",             // 可选（默认 note）
-  "tags": "crawler,architecture", // 可选
-  "gen_provider": "openclaw",     // 可选
-  "root": "/home/node/.../knowledge_root"     // 可选
+  "text": "Today I had an idea about a web scraping architecture...",
+  "title": "Notes on web scraping architecture",   // optional; auto-generated if omitted
+  "category": "idea",                              // optional (default: note)
+  "tags": "crawler,architecture",                  // optional
+  "gen_provider": "openclaw",                      // optional
+  "root": "/home/node/.../knowledge_root"          // optional
 }
 ```
 
-**行为：**
+**Behavior:**
 
-- 调用 `clawsqlite knowledge ingest --text ...`；
-- 与 URL 场景一样生成长摘要/标签/向量（取决于配置）；
-- `source_url` 将为 `Local`；
-- 文件名使用拼音/英文 slug，方便跨平台。
+* calls `clawsqlite knowledge ingest --text ...`;
+* generates long summary, tags, and embedding the same way as in the URL case, depending on configuration;
+* `source_url` will be `Local`;
+* filenames use pinyin / English slug for easier cross-platform handling.
 
 ### 3. `search`
 
-按关键字/向量/混合检索知识库。
+Search the knowledge base by keyword, vector, or hybrid retrieval.
 
-**Payload 示例：**
+**Example payload:**
 
 ```json
 {
   "action": "search",
-  "query": "网络抓取 架构",
-  "mode": "hybrid",               // 可选：hybrid|fts|vec（默认 hybrid）
-  "topk": 10,                      // 可选
-  "category": "idea",            // 可选
-  "tag": "crawler",              // 可选
-  "include_deleted": false,       // 可选
-  "root": "/home/node/.../knowledge_root"     // 可选
+  "query": "web scraping architecture",
+  "mode": "hybrid",               // optional: hybrid|fts|vec (default: hybrid)
+  "topk": 10,                     // optional
+  "category": "idea",             // optional
+  "tag": "crawler",               // optional
+  "include_deleted": false,       // optional
+  "root": "/home/node/.../knowledge_root"   // optional
 }
 ```
 
-**行为：**
+**Behavior:**
 
-- 调用 `clawsqlite knowledge search ...`；
-- 当 embedding 启用且 vec 表存在时，`mode=hybrid` 会结合向量和 FTS；
-- 当 embedding 未启用时，`mode=hybrid` 自动退化为纯 FTS；
-- 支持按 category/tag 过滤，以及是否包含软删记录。
+* calls `clawsqlite knowledge search ...`;
+* when embeddings are enabled and the vec table exists, `mode=hybrid` combines vector search and FTS;
+* when embeddings are not enabled, `mode=hybrid` automatically falls back to pure FTS;
+* supports filtering by `category` / `tag`, and whether to include soft-deleted records.
 
-**返回：**
+**Returns:**
 
 ```json
 {
@@ -184,51 +185,52 @@ subprocess.run(cmd, cwd=...)
 
 ### 4. `show`
 
-按 id 查看知识库中的一条记录，可选返回全文。
+Show one record from the knowledge base by id, optionally including full content.
 
-**Payload 示例：**
+**Example payload:**
 
 ```json
 {
   "action": "show",
   "id": 3,
-  "full": true,                     // 可选，默认 true
-  "root": "/home/node/.../knowledge_root"     // 可选
+  "full": true,                   // optional, default: true
+  "root": "/home/node/.../knowledge_root"   // optional
 }
 ```
 
-**行为：**
+**Behavior:**
 
-- 调用 `clawsqlite knowledge show --id ... --full --json`；
-- 返回完整元数据与可选正文内容（`content` 字段）。
+* calls `clawsqlite knowledge show --id ... --full --json`;
+* returns full metadata and optional body content (the `content` field).
 
 ### 5. `maintenance_preview`
 
-预览一次维护操作，检查孤儿文件/备份/路径问题，不执行删改。
+Preview one maintenance pass. It checks orphan files, backups, and path issues, but does not modify anything.
 
-**Payload 示例：**
+**Example payload:**
 
 ```json
 {
   "action": "maintenance_preview",
-  "days": 3,                        // 可选，备份保留天数
-  "root": "/home/node/.../knowledge_root"     // 可选
+  "days": 3,                      // optional, backup retention days
+  "root": "/home/node/.../knowledge_root"   // optional
 }
 ```
 
-**行为：**
+**Behavior:**
 
-- 调用 `clawsqlite knowledge maintenance gc --days N --dry-run --json`；
-- 报告：
-  - `orphans`: 磁盘有文件但 DB 无记录；
-  - `bak_to_delete`: `.bak_YYYYMMDD` 且早于保留天数；
-  - `broken_records`: DB 中指向不存在路径的记录。
+* calls `clawsqlite knowledge maintenance gc --days N --dry-run --json`;
+* reports:
+
+  * `orphans`: files on disk with no DB record;
+  * `bak_to_delete`: `.bak_YYYYMMDD` files older than the retention window;
+  * `broken_records`: DB records that point to missing paths.
 
 ### 6. `maintenance_apply`
 
-执行一次维护清理（慎用）。
+Apply one maintenance cleanup pass (use with care).
 
-**Payload 示例：**
+**Example payload:**
 
 ```json
 {
@@ -238,20 +240,18 @@ subprocess.run(cmd, cwd=...)
 }
 ```
 
-**行为：**
+**Behavior:**
 
-- 调用 `clawsqlite knowledge maintenance gc --days N --json`；
-- 删除 `orphans + bak_to_delete`；
-- 通过 plumbing 跑一次 `VACUUM` 压缩 DB；
-- 返回 deleted 列表及状态。
+* calls `clawsqlite knowledge maintenance gc --days N --json`;
+* deletes `orphans + bak_to_delete`;
+* runs one `VACUUM` through plumbing to compact the database;
+* returns the deleted items and status.
 
 ---
 
-## 安全与可审计性
+## Security and auditability
 
-- Skill 仅依赖 PyPI 上的 `clawsqlite` 包；
-- 不 vendor 源码、不 git clone、不下载额外二进制；
-- 所有对知识库的操作都通过显式的 `clawsqlite knowledge ...` CLI 完成，
-  并且可以在日志中完整审计 `stdout/stderr`；
-- 重度操作（maintenance_apply 等）建议只由管理员或预定的
-  自动任务调用，不在普通对话中频繁触发。
+* The Skill depends only on the `clawsqlite` package from PyPI;
+* it does not vendor source code, does not git clone, and does not download extra binaries;
+* all knowledge base operations are performed through explicit `clawsqlite knowledge ...` CLI calls, and their `stdout/stderr` can be fully audited in logs;
+* heavy operations such as `maintenance_apply` should be called only by administrators or scheduled automation tasks, not triggered frequently in ordinary conversation.
