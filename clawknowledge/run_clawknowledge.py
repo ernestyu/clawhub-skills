@@ -11,26 +11,24 @@ It is intentionally a thin, auditable wrapper around the public
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
-from pathlib import Path
 from typing import Any, Dict
-
-
-REPO_ROOT = Path(__file__).resolve().parent.parent  # workspace root
 
 
 def _run_knowledge_cli(args: list[str]) -> Dict[str, Any]:
     """Run `clawsqlite knowledge ...` and return parsed JSON when applicable.
 
-    - Uses the current Python interpreter and module `clawsqlite_cli`.
-    - Expects `--json` to be present when JSON output is desired.
+    This relies on the `clawsqlite` package being installed in the same
+    Python environment as this skill (typically via `bootstrap_deps.py`).
+    It uses `python -m clawsqlite_cli knowledge ...` so that imports are
+    resolved from the installed package, not from any local source tree.
+
+    NOTE: `--json` should be part of *args* when JSON output is desired.
     """
     cmd = [sys.executable, "-m", "clawsqlite_cli", "knowledge"] + args
     proc = subprocess.run(
         cmd,
-        cwd=str(REPO_ROOT / "clawsqlite"),
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
