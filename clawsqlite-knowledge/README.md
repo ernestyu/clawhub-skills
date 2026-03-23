@@ -1,6 +1,6 @@
-# clawknowledge (ClawHub Skill)
+# clawsqlite-knowledge (ClawHub Skill)
 
-`clawknowledge` is a ClawHub skill that wraps the
+`clawsqlite-knowledge` is a ClawHub skill that wraps the
 [clawsqlite](https://github.com/ernestyu/clawsqlite) **knowledge** CLI and
 exposes a small, opinionated API for day‑to‑day knowledge base work.
 
@@ -30,8 +30,8 @@ wrapper.
   - Exposes multiple namespaces: `clawsqlite knowledge|db|index|fs|embed`.
   - Suitable for direct shell use, scripting, and other applications.
 
-- **clawknowledge (this skill)**
-  - Lives under `clawhub-skills/clawknowledge`.
+- **clawsqlite-knowledge (this skill)**
+  - Lives under `clawhub-skills/clawsqlite-knowledge`.
   - Installed inside the ClawHub environment as a skill.
   - Depends on `clawsqlite` via PyPI (no vendored source, no git clone).
   - Exposes a **small JSON API** over stdin/stdout:
@@ -45,7 +45,7 @@ wrapper.
 The idea is:
 
 - Use `clawsqlite` when you want the **full CLI** and Python library;
-- Use `clawknowledge` when you want a **high‑level skill** your agents can
+- Use `clawsqlite-knowledge` when you want a **high‑level skill** your agents can
   call to manage a personal knowledge base.
 
 ---

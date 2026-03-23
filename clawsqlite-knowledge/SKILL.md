@@ -1,13 +1,13 @@
 ---
-name: clawknowledge
+name: clawsqlite-knowledge
 description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/maintenance.
 version: 0.1.0
-metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawknowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}
+metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}
 ---
 
-# clawknowledge (OpenClaw Skill)
+# clawsqlite-knowledge (OpenClaw Skill)
 
-`clawknowledge` 是一个围绕 PyPI 包 **clawsqlite** 构建的知识库 Skill。
+`clawsqlite-knowledge` 是一个围绕 PyPI 包 **clawsqlite** 构建的知识库 Skill。
 
 它是一个**薄包装**：
 
@@ -40,7 +40,7 @@ metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags
 
 ```yaml
 install:
-  - id: clawknowledge_bootstrap
+  - id: clawsqlite_knowledge_bootstrap
     kind: python
     label: Install clawsqlite from PyPI
     script: bootstrap_deps.py

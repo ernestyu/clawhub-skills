@@ -1,6 +1,6 @@
-# clawknowledge（ClawHub Skill）
+# clawsqlite-knowledge（ClawHub Skill）
 
-`clawknowledge` 是一个围绕
+`clawsqlite-knowledge` 是一个围绕
 [clawsqlite](https://github.com/ernestyu/clawsqlite) **knowledge** CLI
 封装的 ClawHub 技能。
 
@@ -30,8 +30,8 @@ Agent 调用更方便、更安全。
   - 暴露多个一级命令：`clawsqlite knowledge|db|index|fs|embed`；
   - 适合在 shell 里直接用，也适合写脚本、做其它应用。
 
-- **clawknowledge（本 Skill）**
-  - 代码目录：`clawhub-skills/clawknowledge`；
+- **clawsqlite-knowledge（本 Skill）**
+  - 代码目录：`clawhub-skills/clawsqlite-knowledge`；
   - 由 ClawHub 安装并运行；
   - 依赖 PyPI 上的 `clawsqlite` 包（不 vendor 源码，不 git clone）；
   - 对外暴露一个小而精的 JSON API：
@@ -45,7 +45,7 @@ Agent 调用更方便、更安全。
 你可以简单理解为：
 
 - 需要**全功能 CLI / 算法** → 用 `clawsqlite`；
-- 需要**给 Agent 用的知识库 Skill** → 用 `clawknowledge`。
+- 需要**给 Agent 用的知识库 Skill** → 用 `clawsqlite-knowledge`。
 
 ---
 
