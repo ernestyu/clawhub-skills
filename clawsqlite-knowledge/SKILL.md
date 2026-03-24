@@ -1,7 +1,7 @@
 ---
 name: clawsqlite-knowledge
 description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/show.
-version: 0.1.6
+version: 0.1.7
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}
 ---
 
@@ -12,7 +12,7 @@ metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags
 It is a **thin wrapper**:
 
 - it does not vendor the source code and does not git clone any repository;
-- during installation, it installs `clawsqlite>=0.1.0` (with a workspace-prefix fallback when the runtime env is not writable);
+- during installation, it installs `clawsqlite>=0.1.1` (with a workspace-prefix fallback when the runtime env is not writable);
 - during runtime, it operates the knowledge base only through the `clawsqlite knowledge ...` CLI.
 
 Its main capabilities are grouped into two areas:
@@ -215,6 +215,27 @@ Show one record from the knowledge base by id, optionally including full content
 
 * calls `clawsqlite knowledge show --id ... --full --json`;
 * returns full metadata and optional body content (the `content` field).
+
+---
+
+## FTS/jieba fallback (CJK)
+
+This Skill relies on the underlying `clawsqlite` CLI for FTS tokenization. When the CJK tokenizer extension
+`libsimple` cannot be loaded, `clawsqlite` can switch to a jieba-based pre-segmentation mode controlled by
+`CLAWSQLITE_FTS_JIEBA=auto|on|off`:
+
+- `auto` (default): only enable when `libsimple` is unavailable **and** `jieba` is installed.
+- `on`: force jieba pre-segmentation even if `libsimple` is available.
+- `off`: disable jieba pre-segmentation.
+
+In jieba mode, CJK text is segmented with jieba and joined with spaces before being written to the FTS index;
+queries apply the same normalization, so write/rebuild/query stay consistent.
+
+If you change this setting on an existing DB, rebuild the FTS index:
+
+```bash
+clawsqlite knowledge reindex --rebuild --fts
+```
 
 ---
 

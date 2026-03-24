@@ -60,7 +60,7 @@ This skill is meant to be installed and run by ClawHub.
   prefix if the runtime env is not writable:
 
   ```python
-  cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.0"]
+  cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.1"]
   proc = subprocess.run(cmd)
   if proc.returncode != 0:
       subprocess.run([...,"--prefix=.clawsqlite-venv"])
@@ -271,19 +271,29 @@ Use **clawsqlite (PyPI/CLI)** when:
 ### FTS/jieba fallback (CJK)
 
 This skill relies on the underlying `clawsqlite` CLI for FTS tokenization.
-When the CJK tokenizer extension `libsimple` cannot be loaded, the
+When the CJK tokenizer extension `libsimple` cannot be loaded, `clawsqlite`
+can switch to a jieba-based pre-segmentation mode controlled by
+`CLAWSQLITE_FTS_JIEBA=auto|on|off`:
 
-documented fallback in `clawsqlite` is to use a jieba-based pre-segmentation
-mode controlled by `CLAWSQLITE_FTS_JIEBA=auto|on|off`. In that mode,
-CJK text is tokenized with jieba and joined with spaces before being
-written to the FTS index; queries are normalized the same way.
+- `auto` (default): only enable when `libsimple` is unavailable **and** `jieba` is installed.
+- `on`: force jieba pre-segmentation even if `libsimple` is available.
+- `off`: disable jieba pre-segmentation.
 
-If you enable this fallback on an existing DB, you should run:
+In jieba mode, CJK text is segmented with jieba and joined with spaces before
+being written to the FTS index; queries apply the same normalization so
+write/rebuild/query stay consistent. English text is unaffected.
+
+If you change this setting on an existing DB, rebuild the FTS index:
 
 ```bash
 clawsqlite knowledge reindex --rebuild --fts
 ```
 
-from the `clawsqlite` project so that the FTS index is rebuilt using the
-current tokenizer configuration. See the `clawsqlite` README for the full
-behavior and env matrix.
+See the `clawsqlite` README for the full behavior and env matrix.
+
+---
+
+## 7. Upgrade notes (clawsqlite>=0.1.1)
+
+- This Skill now depends on `clawsqlite>=0.1.1`; updates will install the new PyPI version via `bootstrap_deps.py`.
+- In OpenClaw, a typical rollout is: `openclaw skills update clawsqlite-knowledge`, then rebuild FTS if you changed `CLAWSQLITE_FTS_JIEBA`.

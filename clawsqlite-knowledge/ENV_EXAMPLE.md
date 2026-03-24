@@ -20,7 +20,9 @@ Below are examples of env vars that are relevant for
 # CLAWSQLITE_VEC_DIM=1024
 
 # --- FTS/jieba fallback (CJK) ---
-# CLAWSQLITE_FTS_JIEBA=auto   # auto|on|off, see the core clawsqlite README
+# CLAWSQLITE_FTS_JIEBA=auto   # auto: only when libsimple is missing AND jieba is installed
+#                             # on: force jieba pre-segmentation; off: disable
+#                             # if you change this, rebuild: clawsqlite knowledge reindex --rebuild --fts
 
 # --- URL scraper (recommended: clawfetch) ---
 # CLAWSQLITE_SCRAPE_CMD="node /home/node/.openclaw/workspace/clawfetch/clawfetch.js --auto-install"

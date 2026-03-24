@@ -271,15 +271,26 @@ NEXT: set --root/--db (or CLAWSQLITE_ROOT/CLAWSQLITE_DB) to an existing knowledg
 `libsimple`（CJK tokenizer 扩展）无法加载时，可以通过
 `CLAWSQLITE_FTS_JIEBA=auto|on|off` 启用 `jieba` 预分词模式：
 
-- Python 层先用 `jieba` 对 CJK 文本分词并用空格连接；
-- FTS 只负责按空白拆词+建索引；
-- 查询端则用同样的规则归一化查询串。
+- `auto`（默认）：仅当 `libsimple` 无法加载且环境中有 `jieba` 时启用；
+- `on`：强制启用 jieba 预分词（即使 `libsimple` 可用）；
+- `off`：禁用 jieba 预分词。
 
-如果在已有数据库上开启该模式，建议在 `clawsqlite` 仓库里执行：
+在 jieba 模式下，CJK 文本会先用 jieba 分词并用空格拼接后写入 FTS；
+查询侧也使用同样的规则归一化，因此写入 / 重建 / 查询保持一致。
+英文文本不受影响。
+
+如果在已有数据库上切换该模式，建议执行：
 
 ```bash
 clawsqlite knowledge reindex --rebuild --fts
 ```
 
-让 FTS 索引按照当前 tokenizer 配置（simple 或 jieba 退级）重建。
+让 FTS 索引按当前 tokenizer 配置（simple 或 jieba 退级）重建。
 详细行为说明见 `clawsqlite` 仓库的 README/README_zh。
+
+---
+
+## 7. 升级说明（clawsqlite>=0.1.1）
+
+- 本 Skill 依赖 `clawsqlite>=0.1.1`，更新时会通过 `bootstrap_deps.py` 安装新的 PyPI 版本。
+- 在 OpenClaw 中，推荐的下发流程是：`openclaw skills update clawsqlite-knowledge`，如同时调整了 `CLAWSQLITE_FTS_JIEBA`，再执行一次 FTS 重建。
