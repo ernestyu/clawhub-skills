@@ -11,7 +11,7 @@ operations you actually want to automate in OpenClaw agents:
 - Ingest your own notes/ideas/quotes as text
 - Search the knowledge base (FTS / hybrid / vec)
 - Show a single record by id
-- Run basic maintenance (orphan detection + GC)
+- Use the underlying `clawsqlite` CLI for maintenance (orphan detection + GC)
 
 All heavy lifting (schema, indexing, embedding, maintenance) is implemented
 in the `clawsqlite` PyPI package. This skill is just a thin, auditable
@@ -39,8 +39,6 @@ wrapper.
     - `ingest_text`
     - `search`
     - `show`
-    - `maintenance_preview`
-    - `maintenance_apply`
 
 The idea is:
 
@@ -118,6 +116,8 @@ All handlers return a JSON object with at least:
 
 - `ok: true|false`
 - `data: ...` on success, or `error` / `exit_code` / `stdout` / `stderr` on failure
+- `next: [...]` when the underlying CLI emits NEXT hints
+- `error_kind` on failures (e.g., missing scraper / vec / permission)
 - `next: [...]` when the underlying CLI emits NEXT hints
 - `error_kind` on failures (e.g., missing scraper / vec / permission)
 

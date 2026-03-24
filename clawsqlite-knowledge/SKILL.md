@@ -1,6 +1,6 @@
 ---
 name: clawsqlite-knowledge
-description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/maintenance.
+description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/show.
 version: 0.1.6
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}
 ---
@@ -15,7 +15,7 @@ It is a **thin wrapper**:
 - during installation, it installs `clawsqlite>=0.1.0` (with a workspace-prefix fallback when the runtime env is not writable);
 - during runtime, it operates the knowledge base only through the `clawsqlite knowledge ...` CLI.
 
-Its main capabilities are grouped into three areas:
+Its main capabilities are grouped into two areas:
 
 1. **Ingestion**
    - ingest from a URL (together with an existing fetch tool such as clawfetch);
@@ -23,9 +23,6 @@ Its main capabilities are grouped into three areas:
 2. **Retrieval**
    - hybrid retrieval (hybrid / FTS / vec with automatic fallback)
    - show a full record by id (including full content).
-3. **Maintenance**
-   - preview orphan files, backups, and path issues;
-   - apply one cleanup pass plus VACUUM.
 
 ---
 
