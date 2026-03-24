@@ -25,7 +25,12 @@ def _site_packages(prefix: Path) -> Path:
 
 
 def main() -> int:
-    cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.0"]
+    # Require clawsqlite>=0.1.1 so older installs get upgraded when the
+    # skill is updated. Both the base env and the workspace prefix use
+    # the same requirement string to avoid version skew.
+    requirement = "clawsqlite>=0.1.1"
+
+    cmd = [sys.executable, "-m", "pip", "install", requirement]
     proc = subprocess.run(cmd)
     if proc.returncode == 0:
         return 0
@@ -36,7 +41,7 @@ def main() -> int:
         "-m",
         "pip",
         "install",
-        "clawsqlite>=0.1.0",
+        requirement,
         f"--prefix={prefix}",
     ]
     proc2 = subprocess.run(prefix_cmd)
