@@ -58,11 +58,14 @@ This skill is meant to be installed and run by ClawHub.
   - A Python runtime
   - A bootstrap script: `bootstrap_deps.py`
   - The runtime entry: `run_clawknowledge.py`
-- The bootstrap script does only one thing:
+- The bootstrap script installs `clawsqlite` and falls back to a workspace-local
+  prefix if the runtime env is not writable:
 
   ```python
   cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.0"]
-  subprocess.run(cmd)
+  proc = subprocess.run(cmd)
+  if proc.returncode != 0:
+      subprocess.run([...,"--prefix=.clawsqlite-venv"])
   ```
 
 There are **no** git clones, no extra `pip install` calls, and no system
@@ -71,6 +74,28 @@ package installs at runtime. All heavy code lives in the public
 
 Once installed by ClawHub, agents can invoke the skill by sending JSON
 payloads to `run_clawknowledge.py`.
+
+---
+
+### 2.1 OpenClaw workspace-friendly setup (recommended)
+
+If the OpenClaw runtime uses a read-only venv, the bootstrap fallback installs
+`clawsqlite` under `<workspace>/.clawsqlite-venv`. The runtime auto-adds that
+prefix site-packages directory to `PYTHONPATH` when present.
+
+For vector search (vec0), a workspace-local sqlite-vec install is the safest:
+
+```bash
+python -m pip install "sqlite-vec>=0.1.7" --prefix="./.sqlite-vec"
+CLAWSQLITE_VEC_EXT=<workspace>/.sqlite-vec/lib/python3.X/site-packages/sqlite_vec/vec0.so
+CLAWSQLITE_VEC_DIM=<your-embedding-dim>
+```
+
+For URL ingestion, configure a workspace scraper (clawfetch):
+
+```bash
+CLAWSQLITE_SCRAPE_CMD="node <workspace>/clawfetch/clawfetch.js --auto-install"
+```
 
 ---
 
@@ -93,6 +118,8 @@ All handlers return a JSON object with at least:
 
 - `ok: true|false`
 - `data: ...` on success, or `error` / `exit_code` / `stdout` / `stderr` on failure
+- `next: [...]` when the underlying CLI emits NEXT hints
+- `error_kind` on failures (e.g., missing scraper / vec / permission)
 
 ---
 
@@ -256,6 +283,9 @@ NEXT: set --root/--db (or CLAWSQLITE_ROOT/CLAWSQLITE_DB) to an existing knowledg
 
 `run_clawknowledge.py` captures non‑zero exit codes and returns them in the
 JSON response so agents can inspect and act on these hints.
+It also surfaces `NEXT` hints as a structured `next` array and adds an
+`error_kind` field so agents can decide the next action (e.g., missing
+scraper, vec extension, or permissions).
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: clawsqlite-knowledge
 description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/maintenance.
-version: 0.1.4
+version: 0.1.6
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}
 ---
 
@@ -12,7 +12,7 @@ metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags
 It is a **thin wrapper**:
 
 - it does not vendor the source code and does not git clone any repository;
-- during installation, it does only one thing: `pip install clawsqlite>=0.1.0`;
+- during installation, it installs `clawsqlite>=0.1.0` (with a workspace-prefix fallback when the runtime env is not writable);
 - during runtime, it operates the knowledge base only through the `clawsqlite knowledge ...` CLI.
 
 Its main capabilities are grouped into three areas:
@@ -50,7 +50,9 @@ The content of `bootstrap_deps.py` is intentionally simple and can be audited in
 
 ```python
 cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.0"]
-subprocess.run(cmd)
+proc = subprocess.run(cmd)
+if proc.returncode != 0:
+    subprocess.run([...,"--prefix=.clawsqlite-venv"])
 ```
 
 The Skill itself will not:
@@ -64,6 +66,9 @@ This Skill forwards the optional `root` field in the payload directly to the
 CLI (mapped to `--root`), so callers control where those files live. In
 ClawHub deployments, this is expected to be a dedicated data directory for
 this skill.
+
+If the workspace-prefix fallback is used, the runtime auto-adds the prefix
+site-packages directory to `PYTHONPATH` before invoking the CLI.
 
 ---
 
@@ -82,6 +87,10 @@ All CLI calls are centralized in one function:
 cmd = [sys.executable, "-m", "clawsqlite_cli", "knowledge"] + args
 subprocess.run(cmd, cwd=...)
 ```
+
+If the underlying CLI emits `NEXT:` hints, this runtime surfaces them as a
+structured `next` array in the JSON response. On failure, it also includes an
+`error_kind` field for quick classification.
 
 ---
 

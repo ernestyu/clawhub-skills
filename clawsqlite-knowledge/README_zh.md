@@ -73,6 +73,26 @@ Skill 不会：
 ClawHub 完成安装后，Agent 通过向 `run_clawknowledge.py` 写入 JSON
 即可调用本 Skill。
 
+### 2.1 OpenClaw 主机上的推荐配置（workspace 本地）
+
+如果 OpenClaw 运行在只读 venv 中，安装脚本会退回到
+`<workspace>/.clawsqlite-venv`，运行时会自动把该前缀的
+site-packages 加入 `PYTHONPATH`。
+
+向量检索（vec0）推荐在 workspace 下安装 sqlite-vec：
+
+```bash
+python -m pip install "sqlite-vec>=0.1.7" --prefix="./.sqlite-vec"
+CLAWSQLITE_VEC_EXT=<workspace>/.sqlite-vec/lib/python3.X/site-packages/sqlite_vec/vec0.so
+CLAWSQLITE_VEC_DIM=<你的embedding维度>
+```
+
+URL 入库推荐使用 workspace 内的 clawfetch：
+
+```bash
+CLAWSQLITE_SCRAPE_CMD="node <workspace>/clawfetch/clawfetch.js --auto-install"
+```
+
 ---
 
 ## 3. 运行约定
@@ -93,6 +113,8 @@ ClawHub 完成安装后，Agent 通过向 `run_clawknowledge.py` 写入 JSON
 
 - 成功：`{"ok": true, "data": {...}}`；
 - 失败：`{"ok": false, "error": "...", "exit_code": 1, "stdout": "...", "stderr": "..."}`。
+- 若 CLI 输出 NEXT 提示，会在返回中包含 `next` 数组；
+- 失败时还会包含 `error_kind` 便于分类处理。
 
 ---
 
@@ -254,6 +276,7 @@ NEXT: set --root/--db (or CLAWSQLITE_ROOT/CLAWSQLITE_DB) to an existing knowledg
 
 `run_clawknowledge.py` 在 CLI 退出码非 0 时，会把这些信息一并放入
 JSON 返回值中，方便 Agent 根据 `NEXT` 做下一步动作。
+同时会提供结构化的 `next` 数组与 `error_kind`，便于自动判断下一步。
 
 ---
 
