@@ -70,7 +70,7 @@ def main() -> int:
 
             NEXT:
               - Try installing into the workspace prefix manually:
-                  python -m pip install "clawsqlite>=0.1.0" --prefix="{prefix}"
+                  python -m pip install "clawsqlite>=0.1.1" --prefix="{prefix}"
               - Then ensure PYTHONPATH includes:
                   {site_packages}
             """
