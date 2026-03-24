@@ -267,3 +267,23 @@ Use **clawsqlite (PyPI/CLI)** when:
   - `clawsqlite fs list-orphans/gc`
   - `clawsqlite embed column`
 - You are writing new applications beyond a single personal KB.
+
+### FTS/jieba fallback (CJK)
+
+This skill relies on the underlying `clawsqlite` CLI for FTS tokenization.
+When the CJK tokenizer extension `libsimple` cannot be loaded, the
+
+documented fallback in `clawsqlite` is to use a jieba-based pre-segmentation
+mode controlled by `CLAWSQLITE_FTS_JIEBA=auto|on|off`. In that mode,
+CJK text is tokenized with jieba and joined with spaces before being
+written to the FTS index; queries are normalized the same way.
+
+If you enable this fallback on an existing DB, you should run:
+
+```bash
+clawsqlite knowledge reindex --rebuild --fts
+```
+
+from the `clawsqlite` project so that the FTS index is rebuilt using the
+current tokenizer configuration. See the `clawsqlite` README for the full
+behavior and env matrix.

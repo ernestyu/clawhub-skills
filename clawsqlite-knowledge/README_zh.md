@@ -265,3 +265,21 @@ NEXT: set --root/--db (or CLAWSQLITE_ROOT/CLAWSQLITE_DB) to an existing knowledg
 
 两者可以复用同一套数据根目录（`CLAWSQLITE_ROOT` / `CLAWSQLITE_DB` /
 `CLAWSQLITE_ARTICLES_DIR`），方便你在 CLI 和 Skill 之间切换。
+### 中文 FTS 退级：libsimple 缺失时的 jieba 模式
+
+本 Skill 在分词与检索层面完全依赖底层 `clawsqlite` 的实现。当
+`libsimple`（CJK tokenizer 扩展）无法加载时，可以通过
+`CLAWSQLITE_FTS_JIEBA=auto|on|off` 启用 `jieba` 预分词模式：
+
+- Python 层先用 `jieba` 对 CJK 文本分词并用空格连接；
+- FTS 只负责按空白拆词+建索引；
+- 查询端则用同样的规则归一化查询串。
+
+如果在已有数据库上开启该模式，建议在 `clawsqlite` 仓库里执行：
+
+```bash
+clawsqlite knowledge reindex --rebuild --fts
+```
+
+让 FTS 索引按照当前 tokenizer 配置（simple 或 jieba 退级）重建。
+详细行为说明见 `clawsqlite` 仓库的 README/README_zh。
