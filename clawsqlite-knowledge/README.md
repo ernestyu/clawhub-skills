@@ -118,8 +118,6 @@ All handlers return a JSON object with at least:
 - `data: ...` on success, or `error` / `exit_code` / `stdout` / `stderr` on failure
 - `next: [...]` when the underlying CLI emits NEXT hints
 - `error_kind` on failures (e.g., missing scraper / vec / permission)
-- `next: [...]` when the underlying CLI emits NEXT hints
-- `error_kind` on failures (e.g., missing scraper / vec / permission)
 
 ---
 
@@ -227,47 +225,6 @@ Retrieve a single record by id.
 
 When `full=true`, the handler uses `clawsqlite knowledge show --full`
 under the hood and returns the markdown content as well.
-
-### 4.5 `maintenance_preview`
-
-Preview maintenance (no deletions).
-
-**Payload example:**
-
-```json
-{
-  "action": "maintenance_preview",
-  "days": 3,
-  "root": "/home/node/.openclaw/workspace/knowledge_data"
-}
-```
-
-This runs `clawsqlite knowledge maintenance gc --days N --dry-run` and
-returns:
-
-- `orphans`: files without DB records
-- `bak_to_delete`: old `.bak_YYYYMMDD` files
-- `broken_records`: DB rows pointing to missing files
-
-### 4.6 `maintenance_apply`
-
-Apply maintenance (delete orphans and old backups, run VACUUM).
-
-**Payload example:**
-
-```json
-{
-  "action": "maintenance_apply",
-  "days": 7,
-  "root": "/home/node/.openclaw/workspace/knowledge_data"
-}
-```
-
-This runs `clawsqlite knowledge maintenance gc --days N` and returns a
-summary of deletions and whether a VACUUM ran.
-
-> Use this action carefully; it is best suited for admin/cron flows, not
-> frequent interactive calls.
 
 ---
 
