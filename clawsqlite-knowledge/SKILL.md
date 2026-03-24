@@ -46,10 +46,11 @@ install:
 The content of `bootstrap_deps.py` is intentionally simple and can be audited in full:
 
 ```python
-cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.0"]
+requirement = "clawsqlite>=0.1.1"
+cmd = [sys.executable, "-m", "pip", "install", requirement]
 proc = subprocess.run(cmd)
 if proc.returncode != 0:
-    subprocess.run([...,"--prefix=.clawsqlite-venv"])
+    subprocess.run([... , "--prefix=.clawsqlite-venv"])
 ```
 
 The Skill itself will not:
