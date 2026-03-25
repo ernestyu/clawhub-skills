@@ -51,6 +51,16 @@
 
 本 Skill 由 ClawHub / OpenClaw 负责安装和运行。
 
+引导脚本会根据固定的版本约束从 PyPI 安装 `clawsqlite`。当前版本
+要求为：
+
+```text
+clawsqlite>=0.1.2
+```
+
+这样可以保证本 Skill 依赖的标签生成、语义重排、查询关键词抽取和
+混合打分权重等行为，与 `clawsqlite` 自身 README 中的说明保持一致。
+
 - `manifest.yaml` 中声明了：
   - Python 运行环境；
   - 引导脚本：`bootstrap_deps.py`；
@@ -186,6 +196,19 @@ CLAWSQLITE_SCRAPE_CMD="node <workspace>/clawfetch/clawfetch.js --auto-install"
 ### 4.3 `search`
 
 在知识库中检索。
+
+底层调用的是 `clawsqlite knowledge search ...`，并且继承了
+clawsqlite 在 0.1.2 版本中的新版行为：
+
+- hybrid 检索：向量 + FTS 的混合模式，在 Embedding 或 vec0
+  不可用时自动退化为纯 FTS；
+- 标签感知打分：标签由 TextRank/TF‑IDF +（可选的）语义向心力生成，
+  并以 0..1 的得分参与最终排序；
+- 查询关键词抽取：自然语言问句会先经过与标签生成相同的
+  TextRank + 语义向心力流水线抽取少量关键词，再喂给 FTS。
+
+混合打分的权重可以通过 `CLAWSQLITE_SCORE_WEIGHTS` 环境变量进行微调，
+具体含义见 `ENV_EXAMPLE.md` 及底层 `clawsqlite` README。
 
 **Payload 示例：**
 

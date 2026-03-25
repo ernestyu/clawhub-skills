@@ -52,6 +52,18 @@ The idea is:
 
 This skill is meant to be installed and run by ClawHub.
 
+The bootstrap script installs the PyPI package `clawsqlite` with a
+version requirement that tracks the features this skill expects. For the
+current version, we require:
+
+```text
+clawsqlite>=0.1.2
+```
+
+This ensures that tag generation, semantic rerank, query keyword
+extraction and hybrid score weights behave as described in the
+`clawsqlite` README.
+
 - The skill manifest (`manifest.yaml`) declares:
   - A Python runtime
   - A bootstrap script: `bootstrap_deps.py`
@@ -182,6 +194,21 @@ The underlying `clawsqlite knowledge ingest --text ...` call will:
 ### 4.3 `search`
 
 Search the knowledge base.
+
+Under the hood this calls `clawsqlite knowledge search ...` with:
+
+- hybrid retrieval: vector + FTS, with automatic downgrade when
+  embeddings or vec0 are not available;
+- tag‑aware scoring: tags are generated from article content via
+  TextRank/TF‑IDF + optional semantic rerank (when embeddings + jieba are
+  available) and used as an extra signal in the final score;
+- query keyword extraction: natural‑language queries are converted to a
+  small set of keywords using the same heuristics as tag generation
+  (TextRank + optional semantic centrality), then normalized for FTS.
+
+You can further tune the hybrid scoring behavior via the
+`CLAWSQLITE_SCORE_WEIGHTS` env (see `ENV_EXAMPLE.md` and the underlying
+`clawsqlite` README for details).
 
 **Payload example:**
 
