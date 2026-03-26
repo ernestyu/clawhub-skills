@@ -57,7 +57,8 @@ FallbackSelector: ...   # 仅在非 readability 模式下出现
 - 也可以显式使用 `--via-flaresolverr` 参数，对某个 URL 强制使用该后端：
 
 ```bash
-FLARESOLVERR_URL=http://127.0.0.1:8191 \n  node node_modules/clawfetch/clawfetch.js --via-flaresolverr 'https://www.kaggle.com/.../some-article'
+FLARESOLVERR_URL=http://127.0.0.1:8191 \
+  node node_modules/clawfetch/clawfetch.js --via-flaresolverr 'https://www.kaggle.com/.../some-article'
 ```
 
 如果 `clawfetch` 在浏览器模式下检测到 Cloudflare / bot 挑战页，并且当前未
@@ -95,25 +96,44 @@ NEXT: Configure FLARESOLVERR_URL to point to a FlareSolverr service, or open the
 
 ---
 
-## 2. 通过 ClawHub 安装
+## 2. 在 OpenClaw 中的安装方式
 
-在 OpenClaw 环境中安装本 skill：
+> **注意：** 早期文档会提到 `clawhub install clawfetch`，并隐含“npm 依赖会自动安装”。
+> 目前实际推荐的流程是使用 `openclaw` CLI 走 **两步显式动作**。
+
+### 第一步：安装 skill 壳到 workspace
+
+在 OpenClaw 环境里，用 skills 子命令把 skill 下载到当前 workspace：
 
 ```bash
-clawhub install clawfetch
+openclaw skills install clawfetch
 ```
 
-安装过程大致会做两件事：
+这一步会在本地创建类似这样的目录：
 
-1. 把 skill artifact 下载到你的 workspace（例如
-   `~/.openclaw/workspace/skills/clawfetch`）。
-2. 运行 skill 级安装脚本：
+```text
+~/.openclaw/workspace/skills/clawfetch
+```
 
-   ```bash
-   set -e && cd {baseDir} && bash bootstrap_deps.sh
-   ```
+此时目录里只有 skill 的元数据和辅助文件：
 
-`bootstrap_deps.sh` 设计得非常克制、易审计，只做一件事：
+- `SKILL.md`
+- `manifest.yaml`
+- `bootstrap_deps.sh`
+- README / README_zh 等
+
+**还没有** 安装 npm 里的 `clawfetch` 包。
+
+### 第二步：在 skill 目录里 bootstrap npm CLI（必须手动执行一次）
+
+进入该目录，运行 bootstrap 脚本，在本地安装实际的 `clawfetch` npm 包：
+
+```bash
+cd ~/.openclaw/workspace/skills/clawfetch
+bash bootstrap_deps.sh
+```
+
+这个脚本刻意保持非常克制，内容本质上只有一条：
 
 ```bash
 npm install clawfetch@0.1.3
@@ -121,20 +141,23 @@ npm install clawfetch@0.1.3
 
 不会在运行时：
 
-- git clone 任意仓库
-- 安装额外无关包
-- 修改全局 npm 配置
+- git clone 任意仓库；
+- 安装无关的额外包；
+- 修改全局 npm 配置。
 
-这跟 `clawhealth-garmin` 走的模型是一样的：
+执行完成后，CLI 入口会出现在：
 
-- 逻辑代码在主仓库（或 npm / PyPI 包）里维护
-- ClawHub skill 只做“薄封装 + 安装 hook”
+```text
+~/.openclaw/workspace/skills/clawfetch/node_modules/clawfetch/clawfetch.js
+```
+
+后续无论是人还是 Agent，都可以直接在这个目录下调用它。
 
 ---
 
 ## 3. 运行方式（从 skill 目录调用）
 
-安装完成后，CLI 的入口在 skill 目录里：
+安装 + bootstrap 完成后，CLI 入口在 skill 目录下：
 
 ```bash
 cd ~/.openclaw/workspace/skills/clawfetch

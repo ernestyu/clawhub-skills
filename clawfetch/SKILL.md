@@ -2,7 +2,7 @@
 name: clawfetch
 description: Web page → Markdown scraper skill that wraps the clawfetch Node CLI to fetch articles, GitHub READMEs, and Reddit threads into normalized markdown with metadata for OpenClaw agents.
 version: 0.1.2
-metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawfetch","tags":["web","scraper","markdown","cli"],"requires":{"bins":["node","npm"],"env":[]},"install":[{"id":"clawfetch_npm","kind":"shell","label":"Install clawfetch npm package locally into this skill directory","script":"set -e && cd {baseDir} && bash bootstrap_deps.sh"}]}}
+metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawfetch","tags":["web","scraper","markdown","cli"],"requires":{"bins":["node","npm"],"env":[]},"install":[{"id":"clawfetch_npm","kind":"shell","label":"Install clawfetch npm package locally into this skill directory","script":"set -e && cd {baseDir} && bash bootstrap_deps.sh"}]}}}
 ---
 
 # clawfetch (OpenClaw Skill)
@@ -15,7 +15,7 @@ This skill is a **thin wrapper** around the public `clawfetch` package:
 - It does **not** vendor the clawfetch source code.
 - It does **not** perform any hidden git clones.
 - It only installs the `clawfetch` npm package in this skill directory via
-  the explicit install hook.
+  a **separate, explicit bootstrap step**.
 
 Typical use cases for agents:
 
@@ -44,20 +44,56 @@ This skill assumes:
 - `node` / `npm` are available in the OpenClaw container.
 - Network access to npm to install the `clawfetch` package and its dependencies.
 
-To install the CLI into the skill directory, the OpenClaw skill installer will
-run:
+### 1. Install the skill into your workspace
+
+Use the OpenClaw CLI to pull the skill from ClawHub into your active workspace:
 
 ```bash
-set -e && cd {baseDir} && bash bootstrap_deps.sh
+openclaw skills install clawfetch
 ```
 
-The `bootstrap_deps.sh` script is small and reviewable; it only calls
-`npm install clawfetch@0.1.3` in the skill directory. No other packages or
-git repositories are fetched by this skill.
+This creates a directory similar to:
+
+```text
+~/.openclaw/workspace/skills/clawfetch
+```
+
+At this point **only the skill wrapper files** exist (SKILL.md, README, manifest,
+`bootstrap_deps.sh`, etc.). The actual npm package with the scraper logic is
+**not installed yet**.
+
+### 2. Bootstrap the npm CLI once (required)
+
+From the skill directory, run the bootstrap script to install the npm package
+locally:
+
+```bash
+cd ~/.openclaw/workspace/skills/clawfetch
+bash bootstrap_deps.sh
+```
+
+This script is small and reviewable; it only calls:
+
+```bash
+npm install clawfetch@0.1.3
+```
+
+Key points:
+
+- OpenClaw's `skills install` **does not currently auto-run** this bootstrap
+  step. Agents or humans must call `bootstrap_deps.sh` explicitly.
+- The install happens **inside** the skill directory. No global npm state is
+  modified.
+
+After this completes, the CLI entrypoint is available at:
+
+```text
+~/.openclaw/workspace/skills/clawfetch/node_modules/clawfetch/clawfetch.js
+```
 
 ## Runtime usage (for agents)
 
-After installation, agents can invoke the CLI from this directory as:
+After the bootstrap step, agents can invoke the CLI from this directory as:
 
 ```bash
 node node_modules/clawfetch/clawfetch.js <url> [--max-comments N] [--no-reddit-rss]
@@ -87,8 +123,8 @@ Recommended patterns:
 - This skill does not:
   - Clone any git repositories at runtime.
   - Download arbitrary source trees into the skill directory.
-  - Run hidden package managers beyond `npm install clawfetch@0.1.3` in the
-    explicit install step.
+  - Run hidden package managers beyond the explicit `npm install` in the
+    bootstrap step.
 - All heavy work (Playwright, Readability, Turndown) comes from the
   published `clawfetch` package and its declared npm dependencies.
 
