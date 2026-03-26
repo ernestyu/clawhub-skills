@@ -75,7 +75,7 @@ bash bootstrap_deps.sh
 This script is small and reviewable; it only calls:
 
 ```bash
-npm install clawfetch@0.1.3
+npm install clawfetch@0.1.5
 ```
 
 Key points:
