@@ -22,6 +22,7 @@ Under the hood the CLI uses:
 - **Playwright** (headless Chromium)
 - **Mozilla Readability** (article extraction)
 - **Turndown** (HTML → markdown)
+- **Optional FlareSolverr backend** for Cloudflare / bot challenge pages (via `FLARESOLVERR_URL`)
 
 Input: a single `http/https` URL
 
@@ -45,6 +46,32 @@ an **OpenClaw-focused, KB-friendly** fetcher with:
 - predictable output format
 - site-specific fast paths (GitHub README, Reddit RSS)
 - clear `NEXT:` hints on errors for agents
+
+---
+
+## Cloudflare / bot challenge support
+
+For sites protected by Cloudflare or similar bot challenges (for example some Kaggle pages),
+`clawfetch` can use an external JS-capable backend such as FlareSolverr:
+
+- When the environment variable `FLARESOLVERR_URL` points to a FlareSolverr-compatible
+  service, the CLI can automatically call it when a bot-block page is detected.
+- You can also explicitly use `--via-flaresolverr` to force using that backend for a given URL:
+
+```bash
+FLARESOLVERR_URL=http://127.0.0.1:8191 \n  node node_modules/clawfetch/clawfetch.js --via-flaresolverr 'https://www.kaggle.com/.../some-article'
+```
+
+If `clawfetch` detects a Cloudflare / bot challenge page in browser mode **and** no
+`FLARESOLVERR_URL` is configured, it will emit a `NEXT:` hint similar to:
+
+```text
+INFO: Detected possible bot-block / Cloudflare challenge page.
+NEXT: Configure FLARESOLVERR_URL to point to a FlareSolverr service, or open the URL in a full browser to pass the challenge manually.
+```
+
+On normal sites (without such challenges), `clawfetch` still only uses Playwright or its
+fast-paths (GitHub / Reddit) and does not depend on FlareSolverr.
 
 ---
 

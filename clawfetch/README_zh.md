@@ -19,6 +19,7 @@
 - Playwright（无头 Chromium）
 - Mozilla Readability（正文抽取）
 - Turndown（HTML → markdown）
+- 可选：FlareSolverr（Cloudflare / bot 挑战页面的 JS 抓取后端，通过 `FLARESOLVERR_URL` 调用）
 
 输入：单个 `http/https` URL
 
@@ -42,6 +43,36 @@ FallbackSelector: ...   # 仅在非 readability 模式下出现
 - 输出格式固定、易于机器解析
 - 对 GitHub / Reddit 提供协议层面的快速路径
 - 错误信息带 `NEXT:` 提示，方便 Agent 决策下一步
+
+---
+
+## Cloudflare / bot 挑战站点支持
+
+对于带有 Cloudflare 或类似 bot 挑战的站点（例如部分 Kaggle 页面），
+底层 `clawfetch` CLI 已经支持通过额外的 JS 抓取后端（例如 FlareSolverr）来
+获取最终 HTML：
+
+- 当环境变量 `FLARESOLVERR_URL` 配置为一个兼容 FlareSolverr API 的服务时，
+  `clawfetch` 在检测到 Cloudflare / bot-block 页面时可以自动调用该服务；
+- 也可以显式使用 `--via-flaresolverr` 参数，对某个 URL 强制使用该后端：
+
+```bash
+FLARESOLVERR_URL=http://127.0.0.1:8191 \n  node node_modules/clawfetch/clawfetch.js --via-flaresolverr 'https://www.kaggle.com/.../some-article'
+```
+
+如果 `clawfetch` 在浏览器模式下检测到 Cloudflare / bot 挑战页，并且当前未
+配置 `FLARESOLVERR_URL`，它会输出类似的 `NEXT:` 提示：
+
+```text
+INFO: Detected possible bot-block / Cloudflare challenge page.
+NEXT: Configure FLARESOLVERR_URL to point to a FlareSolverr service, or open the URL in a full browser to pass the challenge manually.
+```
+
+这意味着在 OpenClaw + 本 skill 的场景下：
+
+- **普通站点**：skill 只需正常调用 `clawfetch`，无需关心 FlareSolverr；
+- **被 Cloudflare 挡住的站点**：你可以在 Agent 环境中配置 `FLARESOLVERR_URL`，
+  或根据 `NEXT:` 提示由人类运维决定是否加上该后端。
 
 ---
 
