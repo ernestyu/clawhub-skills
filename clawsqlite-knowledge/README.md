@@ -57,7 +57,7 @@ version requirement that tracks the features this skill expects. For the
 current version, we require:
 
 ```text
-clawsqlite>=0.1.2
+clawsqlite>=0.1.4
 ```
 
 This ensures that tag generation, semantic rerank, query keyword
@@ -72,7 +72,7 @@ extraction and hybrid score weights behave as described in the
   prefix if the runtime env is not writable:
 
   ```python
-  cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.2"]
+  cmd = [sys.executable, "-m", "pip", "install", "clawsqlite>=0.1.4"]
   proc = subprocess.run(cmd)
   if proc.returncode != 0:
       subprocess.run([...,"--prefix=.clawsqlite-venv"])
@@ -320,7 +320,7 @@ See the `clawsqlite` README for the full behavior and env matrix.
 
 ---
 
-## 7. Upgrade notes (clawsqlite>=0.1.2)
+## 7. Upgrade notes (clawsqlite>=0.1.4)
 
-- This Skill now depends on `clawsqlite>=0.1.2`; updates will install the new PyPI version via `bootstrap_deps.py`.
+- This Skill now depends on `clawsqlite>=0.1.4`; updates will install the new PyPI version via `bootstrap_deps.py`.
 - In OpenClaw, a typical rollout is: `openclaw skills update clawsqlite-knowledge`, then rebuild FTS if you changed `CLAWSQLITE_FTS_JIEBA`.

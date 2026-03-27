@@ -12,7 +12,7 @@ metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags
 It is a **thin wrapper**:
 
 - it does not vendor the source code and does not git clone any repository;
-- during installation, it installs `clawsqlite>=0.1.2` (with a workspace-prefix fallback when the runtime env is not writable);
+- during installation, it installs `clawsqlite>=0.1.4` (with a workspace-prefix fallback when the runtime env is not writable);
 - during runtime, it operates the knowledge base only through the `clawsqlite knowledge ...` CLI.
 
 Its main capabilities are grouped into two areas:
@@ -46,7 +46,7 @@ install:
 The content of `bootstrap_deps.py` is intentionally simple and can be audited in full:
 
 ```python
-requirement = "clawsqlite>=0.1.2"
+requirement = "clawsqlite>=0.1.4"
 cmd = [sys.executable, "-m", "pip", "install", requirement]
 proc = subprocess.run(cmd)
 if proc.returncode != 0:

@@ -55,7 +55,7 @@
 要求为：
 
 ```text
-clawsqlite>=0.1.2
+clawsqlite>=0.1.4
 ```
 
 这样可以保证本 Skill 依赖的标签生成、语义重排、查询关键词抽取和
@@ -65,10 +65,10 @@ clawsqlite>=0.1.2
   - Python 运行环境；
   - 引导脚本：`bootstrap_deps.py`；
   - 运行入口：`run_clawknowledge.py`。
-- `bootstrap_deps.py` 会安装 PyPI 上的 `clawsqlite>=0.1.2`：
+- `bootstrap_deps.py` 会安装 PyPI 上的 `clawsqlite>=0.1.4`：
 
   ```python
-  requirement = "clawsqlite>=0.1.2"
+  requirement = "clawsqlite>=0.1.4"
   cmd = [sys.executable, "-m", "pip", "install", requirement]
   proc = subprocess.run(cmd)
   if proc.returncode != 0:
@@ -313,7 +313,7 @@ clawsqlite knowledge reindex --rebuild --fts
 
 ---
 
-## 7. 升级说明（clawsqlite>=0.1.2）
+## 7. 升级说明（clawsqlite>=0.1.4）
 
-- 本 Skill 依赖 `clawsqlite>=0.1.2`，更新时会通过 `bootstrap_deps.py` 安装新的 PyPI 版本。
+- 本 Skill 依赖 `clawsqlite>=0.1.4`，更新时会通过 `bootstrap_deps.py` 安装新的 PyPI 版本。
 - 在 OpenClaw 中，推荐的下发流程是：`openclaw skills update clawsqlite-knowledge`，如同时调整了 `CLAWSQLITE_FTS_JIEBA`，再执行一次 FTS 重建。
