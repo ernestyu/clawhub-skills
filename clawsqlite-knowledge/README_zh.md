@@ -33,7 +33,7 @@
 - **clawsqlite-knowledge（本 Skill）**
   - 代码目录：`clawhub-skills/clawsqlite-knowledge`；
   - 由 ClawHub 安装并运行；
-  - 依赖 PyPI 上的 `clawsqlite` 包（不 vendor 源码，不 git clone）；
+  - 依赖 PyPI 上的 `clawsqlite>=0.1.4` 包（不 vendor 源码，不 git clone）；
   - 对外暴露一个小而精的 JSON API：
     - `ingest_url`
     - `ingest_text`
@@ -47,67 +47,128 @@
 
 ---
 
-## 2. 在 ClawHub / OpenClaw 中的安装
+## 2. 安装与升级（两阶段）
 
-本 Skill 由 ClawHub / OpenClaw 负责安装和运行。
+在 ClawHub / OpenClaw 中，本 Skill 的安装/升级分为两步：
 
-引导脚本会根据固定的版本约束从 PyPI 安装 `clawsqlite`。当前版本
-要求为：
+1. 安装 / 更新 **Skill 壳**（ClawHub 侧）
+2. 安装 / 升级 **底层的 clawsqlite PyPI 包（v0.1.4+）**
+
+### 2.1 第一步：安装 Skill 壳
+
+在 OpenClaw 环境中，用 skills 子命令把 Skill 安装到当前 workspace：
+
+```bash
+openclaw skills install clawsqlite-knowledge
+```
+
+这一步会在本地创建类似这样的目录：
 
 ```text
-clawsqlite>=0.1.4
+~/.openclaw/workspace/skills/clawsqlite-knowledge
 ```
 
-这样可以保证本 Skill 依赖的标签生成、语义重排、查询关键词抽取和
-混合打分权重等行为，与 `clawsqlite` 自身 README 中的说明保持一致。
+此时目录里只有 Skill 的元数据和辅助文件：
 
-- `manifest.yaml` 中声明了：
-  - Python 运行环境；
-  - 引导脚本：`bootstrap_deps.py`；
-  - 运行入口：`run_clawknowledge.py`。
-- `bootstrap_deps.py` 会安装 PyPI 上的 `clawsqlite>=0.1.4`：
+- `SKILL.md`
+- `manifest.yaml`
+- `bootstrap_deps.py`
+- `run_clawknowledge.py`
+- README / README_zh 等
 
-  ```python
-  requirement = "clawsqlite>=0.1.4"
-  cmd = [sys.executable, "-m", "pip", "install", requirement]
-  proc = subprocess.run(cmd)
-  if proc.returncode != 0:
-      prefix = _workspace_prefix()
-      subprocess.run([
-          sys.executable,
-          "-m",
-          "pip",
-          "install",
-          requirement,
-          f"--prefix={prefix}",
-      ])
+> **重要：** 完成这一步后，只是把 Skill 壳拉到了 workspace，底层的
+> `clawsqlite` CLI 可能还没有安装，或者版本还停留在旧的 0.1.x。第二步
+> 会确保环境里存在 **`clawsqlite>=0.1.4`**。
+
+### 2.2 第二步：安装/升级 `clawsqlite`（PyPI v0.1.4）
+
+第二步由 `manifest.yaml` 里声明的引导脚本处理：
+
+```yaml
+install:
+  - id: clawsqlite_knowledge_bootstrap
+    kind: python
+    label: Install clawsqlite from PyPI
+    script: bootstrap_deps.py
+```
+
+脚本的核心逻辑（简化版）：
+
+```python
+requirement = "clawsqlite>=0.1.4"
+cmd = [sys.executable, "-m", "pip", "install", requirement]
+proc = subprocess.run(cmd)
+if proc.returncode != 0:
+    prefix = _workspace_prefix()
+    subprocess.run([
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        requirement,
+        f"--prefix={prefix}",
+    ])
+```
+
+含义是：
+
+- 优先尝试把 `clawsqlite>=0.1.4` 装到 Skill 运行时使用的默认 Python 环境；
+- 如果该环境只读或 `pip install` 失败，则退回安装到 workspace 本地前缀：
+
+  ```text
+  <workspace>/skills/clawsqlite-knowledge/.clawsqlite-venv
   ```
 
-Skill 不会：
+- 在前缀安装成功后，脚本会打印一段 `NEXT:` 提示，说明：
+  - 运行时会自动把该前缀里的 site-packages 目录加入 `PYTHONPATH`；
+  - 这样 `python -m clawsqlite_cli` 在 Skill 里就能正常工作；
+  - 如果你想在宿主机手动用 CLI，也可以复用这条 `PYTHONPATH`。
 
-- git clone 任意仓库；
-- 额外再跑其它 `pip install`；
-- 安装系统级依赖。
-
-如果运行环境的 venv 只读，安装脚本会退回到
-`<workspace>/.clawsqlite-venv`，运行时会自动把该前缀的
-site-packages 加入 `PYTHONPATH`。
-
-### 2.1 OpenClaw 主机上的推荐配置（workspace 本地）
-
-向量检索（vec0）推荐在 workspace 下安装 sqlite-vec：
+如果你想在安装 Skill 壳之后显式触发第二步，可以：
 
 ```bash
-python -m pip install "sqlite-vec>=0.1.7" --prefix="./.sqlite-vec"
-CLAWSQLITE_VEC_EXT=<workspace>/.sqlite-vec/lib/python3.X/site-packages/sqlite_vec/vec0.so
-CLAWSQLITE_VEC_DIM=<你的 embedding 维度，例如 1024>
+cd ~/.openclaw/workspace/skills/clawsqlite-knowledge
+python bootstrap_deps.py
 ```
 
-URL 入库推荐使用 workspace 内的 clawfetch：
+或在支持的环境中直接重跑一次安装命令，让 ClawHub 再次执行 install hooks：
 
 ```bash
-CLAWSQLITE_SCRAPE_CMD="node <workspace>/clawfetch/clawfetch.js --auto-install"
+openclaw skills install clawsqlite-knowledge
 ```
+
+> **注意：** 这个 Skill **从不** vendor `clawsqlite` 源码，也不会 git clone
+> 仓库。唯一的代码来源就是 `pip install "clawsqlite>=0.1.4"`。
+
+### 2.3 `clawsqlite` CLI 实际装在哪里？
+
+取决于你的环境：
+
+- 如果 `pip install clawsqlite>=0.1.4` 能在基础 venv 中成功：
+  - `clawsqlite` 可执行入口会出现在该 venv 的 `bin` 目录；
+  - 模块 `clawsqlite_cli` 可直接通过 `python -m clawsqlite_cli` 调用。
+- 如果走的是 workspace 前缀回退路径：
+
+  ```text
+  <workspace>/skills/clawsqlite-knowledge/.clawsqlite-venv/
+  ```
+
+  运行时会在执行 `run_clawknowledge.py` 之前，将前缀下的 site-packages
+  加入 `PYTHONPATH`，这样同样可以通过 `python -m clawsqlite_cli` 调用。
+
+如果你希望在宿主机上也直接使用 `clawsqlite` CLI，可以参考类似：
+
+```bash
+cd ~/.openclaw/workspace/skills/clawsqlite-knowledge
+PYTHONPATH="$(python - << 'EOF'
+from bootstrap_deps import _workspace_prefix, _site_packages
+p = _workspace_prefix()
+print(_site_packages(p))
+EOF)"$PYTHONPATH" \
+  python -m clawsqlite_cli knowledge --help
+```
+
+一般情况下，直接当 Skill 用（让 Agent 调用）就够了，不必关心这一步。
 
 ---
 
@@ -129,7 +190,7 @@ CLAWSQLITE_SCRAPE_CMD="node <workspace>/clawfetch/clawfetch.js --auto-install"
 
 - 成功：`{"ok": true, "data": {...}}`；
 - 失败：`{"ok": false, "error": "...", "exit_code": 1, "stdout": "...", "stderr": "..."}`；
-- 若底层 CLI 输出 `NEXT:` 提示，会在返回中附带 `next` 数组；
+- 若底层 CLI 输出 `NEXT:` 行，则解析为 `next` 数组；
 - 失败时还会包含 `error_kind` 字段，粗略标记错误类型（例如
   `missing_scraper` / `missing_embedding` / `other`）。
 
@@ -188,8 +249,10 @@ CLAWSQLITE_SCRAPE_CMD="node <workspace>/clawfetch/clawfetch.js --auto-install"
 
 底层 `clawsqlite knowledge ingest --text ...` 会：
 
-- 生成一段较长摘要（约 800 字以内，非硬截）；
+- 从正文构造“长摘要”（约 800 字以内，按自然段边界软截断）；
 - 用 jieba/启发式抽标签；
+- 在 `clawsqlite>=0.1.4` 中，这套标签生成逻辑与查询侧关键词抽取共用
+  同一条 TextRank + 语义向心流水线；
 - 在配置了 Embedding 的情况下，为摘要打向量并写入 vec 表；
 - 用拼音/ASCII 生成文件名，在 articles 目录下写入 markdown。
 
@@ -198,14 +261,14 @@ CLAWSQLITE_SCRAPE_CMD="node <workspace>/clawfetch/clawfetch.js --auto-install"
 在知识库中检索。
 
 底层调用的是 `clawsqlite knowledge search ...`，并且继承了
-clawsqlite 在 0.1.2 版本中的新版行为：
+clawsqlite 0.1.4 版本中的行为：
 
 - hybrid 检索：向量 + FTS 的混合模式，在 Embedding 或 vec0
   不可用时自动退化为纯 FTS；
 - 标签感知打分：标签由 TextRank/TF‑IDF +（可选的）语义向心力生成，
   并以 0..1 的得分参与最终排序；
 - 查询关键词抽取：自然语言问句会先经过与标签生成相同的
-  TextRank + 语义向心力流水线抽取少量关键词，再喂给 FTS。
+  TextRank + 语义向心水平线抽取少量关键词，再喂给 FTS。
 
 混合打分的权重可以通过 `CLAWSQLITE_SCORE_WEIGHTS` 环境变量进行微调，
 具体含义见 `ENV_EXAMPLE.md` 及底层 `clawsqlite` README。
@@ -288,6 +351,7 @@ NEXT: set --root/--db (or CLAWSQLITE_ROOT/CLAWSQLITE_DB) to an existing knowledg
 
 两者可以复用同一套数据根目录（`CLAWSQLITE_ROOT` / `CLAWSQLITE_DB` /
 `CLAWSQLITE_ARTICLES_DIR`），方便你在 CLI 和 Skill 之间切换。
+
 ### 中文 FTS 退级：libsimple 缺失时的 jieba 模式
 
 本 Skill 在分词与检索层面完全依赖底层 `clawsqlite` 的实现。当
