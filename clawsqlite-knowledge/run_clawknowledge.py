@@ -65,7 +65,11 @@ def _extract_next_lines(stdout: str, stderr: str) -> list[str]:
 
 def _classify_error(output_text: str) -> str:
     text = output_text.lower()
-    if "clawsqlite_scrape_cmd" in text or "requires a scraper" in text or "scrape failed" in text:
+    if (
+        "clawsqlite_scrape_cmd" in text
+        or "requires a scraper" in text
+        or "scrape failed" in text
+    ):
         return "missing_scraper"
     if "no module named" in text and "clawsqlite" in text:
         return "missing_dependency"
@@ -73,7 +77,11 @@ def _classify_error(output_text: str) -> str:
         return "missing_embedding"
     if "vec0 extension not loaded" in text or "vec index not available" in text:
         return "missing_vec_ext"
-    if "permission denied" in text or "eacces" in text or "read-only file system" in text:
+    if (
+        "permission denied" in text
+        or "eacces" in text
+        or "read-only file system" in text
+    ):
         return "permission"
     return "other"
 
@@ -140,7 +148,7 @@ def _missing_dependency_hint_lines() -> list[str]:
     site_packages = _site_packages(prefix)
     return [
         "Install clawsqlite into the workspace prefix:",
-        f'  python -m pip install "clawsqlite>=0.1.4" --prefix="{prefix}"',
+        f'  python -m pip install "clawsqlite>=0.1.5" --prefix="{prefix}"',
         "Then ensure PYTHONPATH includes:",
         f"  {site_packages}",
     ]
@@ -204,7 +212,16 @@ def handle_ingest_url(payload: Dict[str, Any]) -> Dict[str, Any]:
     gen_provider = payload.get("gen_provider", "openclaw")
     root = payload.get("root")  # optional override
 
-    args: list[str] = ["ingest", "--url", url, "--category", category, "--gen-provider", gen_provider, "--json"]
+    args: list[str] = [
+        "ingest",
+        "--url",
+        url,
+        "--category",
+        category,
+        "--gen-provider",
+        gen_provider,
+        "--json",
+    ]
     if title:
         args += ["--title", title]
     if tags:
@@ -314,7 +331,9 @@ def main() -> int:
 
     handler = HANDLERS.get(action)
     if not handler:
-        json.dump({"ok": False, "error": "unknown_action", "action": action}, sys.stdout)
+        json.dump(
+            {"ok": False, "error": "unknown_action", "action": action}, sys.stdout
+        )
         return 1
 
     result = handler(payload)
