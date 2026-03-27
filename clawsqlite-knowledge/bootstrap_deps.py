@@ -25,10 +25,10 @@ def _site_packages(prefix: Path) -> Path:
 
 
 def main() -> int:
-    # Require clawsqlite>=0.1.5 so older installs get upgraded when the
+    # Require clawsqlite>=0.1.6 so older installs get upgraded when the
     # skill is updated. Both the base env and the workspace prefix use
     # the same requirement string to avoid version skew.
-    requirement = "clawsqlite>=0.1.5"
+    requirement = "clawsqlite>=0.1.6"
 
     cmd = [sys.executable, "-m", "pip", "install", requirement]
     proc = subprocess.run(cmd)
@@ -70,7 +70,7 @@ def main() -> int:
 
             NEXT:
               - Try installing into the workspace prefix manually:
-                  python -m pip install "clawsqlite>=0.1.5" --prefix="{prefix}"
+                  python -m pip install "clawsqlite>=0.1.6" --prefix="{prefix}"
               - Then ensure PYTHONPATH includes:
                   {site_packages}
             """

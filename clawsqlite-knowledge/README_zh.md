@@ -33,7 +33,7 @@
 - **clawsqlite-knowledge（本 Skill）**
   - 代码目录：`clawhub-skills/clawsqlite-knowledge`；
   - 由 ClawHub 安装并运行；
-  - 依赖 PyPI 上的 `clawsqlite>=0.1.5` 包（不 vendor 源码，不 git clone）；
+  - 依赖 PyPI 上的 `clawsqlite>=0.1.6` 包（不 vendor 源码，不 git clone）；
   - 对外暴露一个小而精的 JSON API：
     - `ingest_url`
     - `ingest_text`
@@ -78,7 +78,7 @@ openclaw skills install clawsqlite-knowledge
 
 > **重要：** 完成这一步后，只是把 Skill 壳拉到了 workspace，底层的
 > `clawsqlite` CLI 可能还没有安装，或者版本还停留在旧的 0.1.x。第二步
-> 会确保环境里存在 **`clawsqlite>=0.1.5`**。
+> 会确保环境里存在 **`clawsqlite>=0.1.6`**。
 
 ### 2.2 第二步：安装/升级 `clawsqlite`（PyPI v0.1.4）
 
@@ -95,7 +95,7 @@ install:
 脚本的核心逻辑（简化版）：
 
 ```python
-requirement = "clawsqlite>=0.1.5"
+requirement = "clawsqlite>=0.1.6"
 cmd = [sys.executable, "-m", "pip", "install", requirement]
 proc = subprocess.run(cmd)
 if proc.returncode != 0:
@@ -112,7 +112,7 @@ if proc.returncode != 0:
 
 含义是：
 
-- 优先尝试把 `clawsqlite>=0.1.5` 装到 Skill 运行时使用的默认 Python 环境；
+- 优先尝试把 `clawsqlite>=0.1.6` 装到 Skill 运行时使用的默认 Python 环境；
 - 如果该环境只读或 `pip install` 失败，则退回安装到 workspace 本地前缀：
 
   ```text
@@ -138,13 +138,13 @@ openclaw skills install clawsqlite-knowledge
 ```
 
 > **注意：** 这个 Skill **从不** vendor `clawsqlite` 源码，也不会 git clone
-> 仓库。唯一的代码来源就是 `pip install "clawsqlite>=0.1.5"`。
+> 仓库。唯一的代码来源就是 `pip install "clawsqlite>=0.1.6"`。
 
 ### 2.3 `clawsqlite` CLI 实际装在哪里？
 
 取决于你的环境：
 
-- 如果 `pip install clawsqlite>=0.1.5` 能在基础 venv 中成功：
+- 如果 `pip install clawsqlite>=0.1.6` 能在基础 venv 中成功：
   - `clawsqlite` 可执行入口会出现在该 venv 的 `bin` 目录；
   - 模块 `clawsqlite_cli` 可直接通过 `python -m clawsqlite_cli` 调用。
 - 如果走的是 workspace 前缀回退路径：
@@ -251,7 +251,7 @@ EOF)"$PYTHONPATH" \
 
 - 从正文构造“长摘要”（约 800 字以内，按自然段边界软截断）；
 - 用 jieba/启发式抽标签；
-- 在 `clawsqlite>=0.1.5` 中，这套标签生成逻辑与查询侧关键词抽取共用
+- 在 `clawsqlite>=0.1.6` 中，这套标签生成逻辑与查询侧关键词抽取共用
   同一条 TextRank + 语义向心流水线；
 - 在配置了 Embedding 的情况下，为摘要打向量并写入 vec 表；
 - 用拼音/ASCII 生成文件名，在 articles 目录下写入 markdown。
@@ -377,7 +377,7 @@ clawsqlite knowledge reindex --rebuild --fts
 
 ---
 
-## 7. 升级说明（clawsqlite>=0.1.5）
+## 7. 升级说明（clawsqlite>=0.1.6）
 
-- 本 Skill 依赖 `clawsqlite>=0.1.5`，更新时会通过 `bootstrap_deps.py` 安装新的 PyPI 版本。
+- 本 Skill 依赖 `clawsqlite>=0.1.6`，更新时会通过 `bootstrap_deps.py` 安装新的 PyPI 版本。
 - 在 OpenClaw 中，推荐的下发流程是：`openclaw skills update clawsqlite-knowledge`，如同时调整了 `CLAWSQLITE_FTS_JIEBA`，再执行一次 FTS 重建。

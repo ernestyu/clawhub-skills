@@ -148,7 +148,7 @@ def _missing_dependency_hint_lines() -> list[str]:
     site_packages = _site_packages(prefix)
     return [
         "Install clawsqlite into the workspace prefix:",
-        f'  python -m pip install "clawsqlite>=0.1.5" --prefix="{prefix}"',
+        f'  python -m pip install "clawsqlite>=0.1.6" --prefix="{prefix}"',
         "Then ensure PYTHONPATH includes:",
         f"  {site_packages}",
     ]
