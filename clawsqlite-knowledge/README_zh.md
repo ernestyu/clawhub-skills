@@ -33,7 +33,7 @@
 - **clawsqlite-knowledge（本 Skill）**
   - 代码目录：`clawhub-skills/clawsqlite-knowledge`；
   - 由 ClawHub 安装并运行；
-  - 依赖 PyPI 上的 `clawsqlite>=0.1.6` 包（不 vendor 源码，不 git clone）；
+  - 依赖 PyPI 上的 `clawsqlite>=0.1.7` 包（不 vendor 源码，不 git clone）；
   - 对外暴露一个小而精的 JSON API：
     - `ingest_url`
     - `ingest_text`
@@ -52,7 +52,7 @@
 在 ClawHub / OpenClaw 中，本 Skill 的安装/升级分为两步：
 
 1. 安装 / 更新 **Skill 壳**（ClawHub 侧）
-2. 安装 / 升级 **底层的 clawsqlite PyPI 包（v0.1.4+）**
+2. 安装 / 升级 **底层的 clawsqlite PyPI 包（v0.1.7+）**
 
 ### 2.1 第一步：安装 Skill 壳
 
@@ -95,7 +95,7 @@ install:
 脚本的核心逻辑（简化版）：
 
 ```python
-requirement = "clawsqlite>=0.1.6"
+requirement = "clawsqlite>=0.1.7"
 cmd = [sys.executable, "-m", "pip", "install", requirement]
 proc = subprocess.run(cmd)
 if proc.returncode != 0:
@@ -260,18 +260,44 @@ EOF)"$PYTHONPATH" \
 
 在知识库中检索。
 
-底层调用的是 `clawsqlite knowledge search ...`，并且继承了
-clawsqlite 0.1.4 版本中的行为：
+底层调用的是 `clawsqlite knowledge search ...`，并继承了
+`clawsqlite>=0.1.7` 中的行为：
 
 - hybrid 检索：向量 + FTS 的混合模式，在 Embedding 或 vec0
   不可用时自动退化为纯 FTS；
 - 标签感知打分：标签由 TextRank/TF‑IDF +（可选的）语义向心力生成，
-  并以 0..1 的得分参与最终排序；
+  并以 0..1 的得分参与最终排序。在 0.1.7 中，打分逻辑会：
+  - 将摘要与标签分别 embed 到 vec0 表（`articles_vec`、`articles_tag_vec`）中；
+  - 用 `1/(1+d)` + 以 0.5 为中心的 Logistic Sigmoid 归一化向量距离，让“真正相似”的条目得分明显高于一般相似；
+  - 将标签通道拆成“标签语义得分（tag vector）”和“标签字面得分（tag lexical）”，拆分比例由 `CLAWSQLITE_TAG_VEC_FRACTION` 控制；
+  - 对标签字面得分应用可选的 log 压缩：`ln(1+αx)/ln(1+α)`，`α` 来自 `CLAWSQLITE_TAG_FTS_LOG_ALPHA`（默认 5.0），防止一堆弱命中压制语义得分；
 - 查询关键词抽取：自然语言问句会先经过与标签生成相同的
   TextRank + 语义向心水平线抽取少量关键词，再喂给 FTS。
 
 混合打分的权重可以通过 `CLAWSQLITE_SCORE_WEIGHTS` 环境变量进行微调，
-具体含义见 `ENV_EXAMPLE.md` 及底层 `clawsqlite` README。
+其中：
+- `vec`：摘要语义通道权重；
+- `fts`：全文 FTS 通道权重；
+- `tag`：标签通道总权重（再由 `CLAWSQLITE_TAG_VEC_FRACTION` 在“标签语义/标签字面”之间拆分）；
+- `priority` / `recency`：人工权重 + 时效权重。
+
+在中英文混合知识库场景下，一个常见配置是：
+
+```env
+CLAWSQLITE_SCORE_WEIGHTS=vec=0.30,fts=0.10,tag=0.55,priority=0.03,recency=0.02
+CLAWSQLITE_TAG_VEC_FRACTION=0.82
+CLAWSQLITE_TAG_FTS_LOG_ALPHA=5.0
+```
+
+对应大致贡献：
+
+- ~45% 标签语义；
+- ~30% 摘要语义；
+- ~10% 标签字面匹配；
+- ~10% 全文 FTS；
+- ~5% priority/recency。
+
+更多细节可参考 clawsqlite 仓库的 README/README_zh。
 
 **Payload 示例：**
 

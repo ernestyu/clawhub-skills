@@ -53,7 +53,7 @@ The idea is:
 This skill is installed and upgraded in **two stages**:
 
 1. Install / update the **skill shell** from ClawHub
-2. Install / update the **clawsqlite PyPI package (v0.1.4+)** that the skill
+2. Install / update the **clawsqlite PyPI package (v0.1.7+)** that the skill
    depends on
 
 ### 2.1 Stage 1 — install the skill shell
@@ -81,9 +81,9 @@ At this point you only have:
 
 > **Important:** After Stage 1, the skill shell is present, but the underlying
 > `clawsqlite` CLI may still be missing or outdated. Stage 2 ensures
-> `clawsqlite>=0.1.6` is available in the runtime Python environment.
+> `clawsqlite>=0.1.7` is available in the runtime Python environment.
 
-### 2.2 Stage 2 — install or upgrade `clawsqlite` (PyPI, v0.1.4)
+### 2.2 Stage 2 — install or upgrade `clawsqlite` (PyPI, v0.1.7)
 
 The second stage is handled by the bootstrap script declared in
 `manifest.yaml`:
@@ -99,7 +99,7 @@ install:
 The script content (simplified) is:
 
 ```python
-requirement = "clawsqlite>=0.1.6"
+requirement = "clawsqlite>=0.1.7"
 cmd = [sys.executable, "-m", "pip", "install", requirement]
 proc = subprocess.run(cmd)
 if proc.returncode != 0:
@@ -275,14 +275,26 @@ Under the hood this calls `clawsqlite knowledge search ...` with:
   embeddings or vec0 are not available;
 - tag‑aware scoring: tags are generated from article content via
   TextRank/TF‑IDF + optional semantic rerank (when embeddings + jieba are
-  available) and used as an extra signal in the final score;
+  available) and used as an extra signal in the final score. In
+  clawsqlite>=0.1.7, the scorer embeds both summary and tags into vec0
+  tables, normalizes vector distances via a logistic sigmoid over
+  `1/(1+d)`, and splits the tag channel into semantic (vector) and
+  lexical (FTS) parts; lexical tag scores can be log-compressed via
+  `CLAWSQLITE_TAG_FTS_LOG_ALPHA` so partial hits do not dominate;
 - query keyword extraction: natural‑language queries are converted to a
   small set of keywords using the same heuristics as tag generation
   (TextRank + optional semantic centrality), then normalized for FTS.
 
-You can further tune the hybrid scoring behavior via the
-`CLAWSQLITE_SCORE_WEIGHTS` env (see `ENV_EXAMPLE.md` and the underlying
-`clawsqlite` README for details).
+You can further tune the hybrid scoring behavior via:
+
+- `CLAWSQLITE_SCORE_WEIGHTS` (overall vec/fts/tag/priority/recency weights);
+- `CLAWSQLITE_TAG_VEC_FRACTION` (split of the tag channel between
+  semantic tag vectors and lexical tag match);
+- `CLAWSQLITE_TAG_FTS_LOG_ALPHA` (strength of log compression applied to
+  lexical tag scores).
+
+See `ENV_EXAMPLE.md` and the underlying `clawsqlite` README for details
+and recommended values for mixed Chinese/English knowledge bases.
 
 **Payload example:**
 
