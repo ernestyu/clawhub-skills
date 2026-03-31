@@ -134,7 +134,7 @@ bash bootstrap_deps.sh
 This script is intentionally minimal and reviewable. It only does:
 
 ```bash
-npm install clawfetch@0.1.6
+npm install clawfetch@0.1.7
 ```
 
 There is **no** runtime git clone, no vendored source, and no extra packages
@@ -244,7 +244,7 @@ browser scraping, but for most cases the feed-based path is more stable.
 
 The skill itself never calls `npm` at runtime. All dependency management is:
 
-- One-time `npm install clawfetch@0.1.6` in `bootstrap_deps.sh`.
+- One-time `npm install clawfetch@0.1.7` in `bootstrap_deps.sh`.
 - At run time, **only the `clawfetch` CLI** is allowed to decide what to do.
 
 Inside the CLI, `clawfetch` uses `require()` checks for:
@@ -279,7 +279,7 @@ follows a constrained model:
 - No vendored `clawfetch` source code inside the skill.
 - No runtime `git clone`.
 - No arbitrary `curl | bash` or shell scripting beyond a single
-  `npm install clawfetch@0.1.6` in `bootstrap_deps.sh`.
+  `npm install clawfetch@0.1.7` in `bootstrap_deps.sh`.
 - All heavy logic lives in the public npm package `clawfetch`, which is
   itself Apache-2.0 licensed.
 

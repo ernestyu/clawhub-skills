@@ -1,5 +1,5 @@
 name: clawfetch
-version: 0.1.6
+version: 0.1.7
 description: Web page → Markdown scraper skill that wraps the clawfetch Node CLI to fetch articles, GitHub READMEs, and Reddit threads into normalized markdown with metadata.
 author: Ernest Yu
 license: MIT

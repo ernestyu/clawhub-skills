@@ -14,7 +14,7 @@ set -euo pipefail
 # - network access to registry.npmjs.org
 
 # Install clawfetch at the version currently published for agents (0.1.3)
-echo "[clawfetch-skill] Installing clawfetch@0.1.6 into $(pwd)" >&2
-npm install clawfetch@0.1.6
+echo "[clawfetch-skill] Installing clawfetch@0.1.7 into $(pwd)" >&2
+npm install clawfetch@0.1.7
 
 echo "[clawfetch-skill] Done. CLI entrypoint: node_modules/clawfetch/clawfetch.js" >&2

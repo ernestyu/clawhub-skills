@@ -136,7 +136,7 @@ bash bootstrap_deps.sh
 这个脚本刻意保持非常克制，内容本质上只有一条：
 
 ```bash
-npm install clawfetch@0.1.6
+npm install clawfetch@0.1.7
 ```
 
 不会在运行时：
@@ -241,7 +241,7 @@ node node_modules/clawfetch/clawfetch.js \
 
 ## 4. 依赖与缺失依赖时的行为
 
-skill 自身除了 `bootstrap_deps.sh` 里的 `npm install clawfetch@0.1.6` 外，
+skill 自身除了 `bootstrap_deps.sh` 里的 `npm install clawfetch@0.1.7` 外，
 不会再主动调用 `npm`。
 
 运行时的行为完全由 `clawfetch` CLI 决定：

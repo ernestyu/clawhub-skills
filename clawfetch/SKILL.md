@@ -1,7 +1,7 @@
 ---
 name: clawfetch
 description: Web page → Markdown scraper skill that wraps the clawfetch Node CLI to fetch articles, GitHub READMEs, and Reddit threads into normalized markdown with metadata for OpenClaw agents.
-version: 0.1.6
+version: 0.1.7
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawfetch","tags":["web","scraper","markdown","cli"],"requires":{"bins":["node","npm"],"env":[]},"install":[{"id":"clawfetch_npm","kind":"shell","label":"Install clawfetch npm package locally into this skill directory","script":"set -e && cd {baseDir} && bash bootstrap_deps.sh"}]}}}
 ---
 
@@ -75,7 +75,7 @@ bash bootstrap_deps.sh
 This script is small and reviewable; it only calls:
 
 ```bash
-npm install clawfetch@0.1.6
+npm install clawfetch@0.1.7
 ```
 
 Key points:
