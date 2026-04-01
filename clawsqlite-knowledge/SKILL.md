@@ -15,7 +15,7 @@ It is a **thin wrapper**:
 - during installation, it installs `clawsqlite>=0.1.7` (with a workspace-prefix fallback when the runtime env is not writable);
 - during runtime, it operates the knowledge base only through the `clawsqlite knowledge ...` CLI.
 
-Its main capabilities are grouped into two areas:
+Its main capabilities are grouped into three areas:
 
 1. **Ingestion**
    - ingest from a URL (together with an existing fetch tool such as clawfetch);
@@ -23,6 +23,9 @@ Its main capabilities are grouped into two areas:
 2. **Retrieval**
    - hybrid retrieval (hybrid / FTS / vec with automatic fallback)
    - show a full record by id (including full content).
+3. **Reporting (via underlying CLI or JSON action)**
+   - generate periodic interest reports (Markdown + PNG, optional HTML/PDF)
+     for the current knowledge base, based on previously built interest clusters.
 
 ---
 

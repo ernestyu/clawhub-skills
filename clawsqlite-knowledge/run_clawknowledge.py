@@ -309,11 +309,81 @@ def handle_show(payload: Dict[str, Any]) -> Dict[str, Any]:
     return _run_knowledge_cli(args)
 
 
+def handle_report_interest(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate an interest report via `clawsqlite knowledge report-interest`.
+
+    This wraps the CLI command and returns the report directory plus raw
+    stdout. Markdown + PNG charts are always generated; PDF/HTML are
+    best-effort depending on environment (pandoc/LaTeX).
+    """
+    root = payload.get("root")
+    days = int(payload.get("days", 7))
+    date_from = payload.get("date_from")
+    date_to = payload.get("date_to")
+    vec_dim = payload.get("vec_dim")
+    out_dir = payload.get("out_dir")
+    lang = payload.get("lang")
+    fmt = payload.get("format") or payload.get("fmt")
+    no_pdf = bool(payload.get("no_pdf", False))
+
+    args: list[str] = [
+        "report-interest",
+        "--days",
+        str(days),
+    ]
+    if date_from:
+        args += ["--from", date_from]
+    if date_to:
+        args += ["--to", date_to]
+    if vec_dim is not None:
+        args += ["--vec-dim", str(vec_dim)]
+    if out_dir:
+        args += ["--out-dir", out_dir]
+    if lang:
+        args += ["--lang", lang]
+    if fmt:
+        args += ["--format", fmt]
+    if no_pdf:
+        args.append("--no-pdf")
+    if root:
+        args += ["--root", root]
+
+    # We do not pass --json here; report-interest writes a human string to stdout.
+    result = _run_knowledge_cli(args)
+    if not result.get("ok"):
+        return result
+
+    data = result.get("data")
+    raw: str | None = None
+    if isinstance(data, dict):
+        raw = data.get("raw")  # type: ignore[assignment]
+    elif isinstance(data, str):
+        raw = data
+
+    report_dir: str | None = None
+    if raw:
+        for line in reversed(raw.splitlines()):
+            line = line.strip()
+            if not line:
+                continue
+            lower = line.lower()
+            if lower.startswith("report written to"):
+                report_dir = line[len("report written to") :].strip()
+                break
+
+    result["data"] = {
+        "report_dir": report_dir,
+        "stdout": raw,
+    }
+    return result
+
+
 HANDLERS = {
     "ingest_url": handle_ingest_url,
     "ingest_text": handle_ingest_text,
     "search": handle_search,
     "show": handle_show,
+    "report_interest": handle_report_interest,
 }
 
 
