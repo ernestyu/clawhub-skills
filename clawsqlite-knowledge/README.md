@@ -410,3 +410,60 @@ See the `clawsqlite` README for the full behavior and env matrix.
 
 - This Skill now depends on `clawsqlite>=0.1.7`; updates will install the new PyPI version via `bootstrap_deps.py`.
 - In OpenClaw, a typical rollout is: `openclaw skills update clawsqlite-knowledge`, then rebuild FTS if you changed `CLAWSQLITE_FTS_JIEBA`.
+
+## 8. Interest clusters & weekly reports (via underlying clawsqlite CLI)
+
+This Skill deliberately keeps its JSON API small (ingest/search/show), but
+it runs on top of the same SQLite DB and articles directory as the
+full `clawsqlite knowledge` CLI.
+
+If you want to analyze and report on your own interests over time, you can
+use the **interest clusters** and **interest report** commands directly
+against the same DB:
+
+```bash
+# Build or refresh interest clusters from existing embeddings
+clawsqlite knowledge build-interest-clusters \
+  --db /path/to/knowledge.sqlite3 \
+  --min-size 5 \
+  --max-clusters 16
+
+# Inspect cluster quality (radius / distances / PCA plot)
+clawsqlite knowledge inspect-interest-clusters \
+  --db /path/to/knowledge.sqlite3 \
+  --vec-dim 1024
+
+# Generate a weekly interest report (Markdown + PNG, optional HTML/PDF)
+clawsqlite knowledge report-interest \
+  --db /path/to/knowledge.sqlite3 \
+  --days 7 \
+  --vec-dim 1024 \
+  --lang zh \
+  --format html \
+  --out-dir /path/to/reports
+```
+
+The `report-interest` command will create a dated report directory under
+`--out-dir` (default `./reports`):
+
+- `report.md`  – a Markdown report describing:
+  - total new articles and clusters touched in the window;
+  - daily new article counts (table + PNG bar chart);
+  - per-cluster distribution (size, share, mean_radius, sample articles);
+  - a PCA 2D scatter plot of cluster centroids;
+  - "heating / cooling" clusters compared to the previous window.
+- `images/`    – PNG charts (`daily_articles.png`,
+  `cluster_distribution.png`, `interest_clusters_pca.png`).
+- optional `report.pdf` – a PDF generated via `pandoc report.md -o report.pdf`
+  (best-effort; missing LaTeX will not cause the CLI to fail).
+- optional `report.html` – when `--format html` is set and `pandoc` is
+  available, a self-contained HTML report generated via:
+
+  ```bash
+  pandoc report.md -s -o report.html --mathjax --self-contained
+  ```
+
+This Skill does **not** expose interest cluster or report actions directly
+in its JSON API. Instead, it stays focused on ingestion and retrieval,
+while the underlying `clawsqlite` CLI provides the full cluster/report
+tooling on the same knowledge base.

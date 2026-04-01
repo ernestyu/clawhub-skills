@@ -407,3 +407,71 @@ clawsqlite knowledge reindex --rebuild --fts
 
 - 本 Skill 依赖 `clawsqlite>=0.1.7`，更新时会通过 `bootstrap_deps.py` 安装新的 PyPI 版本。
 - 在 OpenClaw 中，推荐的下发流程是：`openclaw skills update clawsqlite-knowledge`，如同时调整了 `CLAWSQLITE_FTS_JIEBA`，再执行一次 FTS 重建。
+
+## 8. 兴趣簇与兴趣报告（通过底层 clawsqlite CLI）
+
+本 Skill 的 JSON API 刻意保持很小（入库/检索/按 id 查看），但其底层
+仍然是同一个 SQLite 数据库和 articles 目录。因此，你可以直接使用
+`clawsqlite knowledge` 的兴趣簇与兴趣报告命令，在同一个知识库上做
+更深入的分析。
+
+典型用法：
+
+```bash
+# 基于现有 embedding 构建或刷新兴趣簇
+clawsqlite knowledge build-interest-clusters \
+  --db /path/to/knowledge.sqlite3 \
+  --min-size 5 \
+  --max-clusters 16
+
+# 检查兴趣簇质量（簇半径 / 簇间距离 / PCA 图）
+clawsqlite knowledge inspect-interest-clusters \
+  --db /path/to/knowledge.sqlite3 \
+  --vec-dim 1024
+
+# 生成一份周度兴趣报告（Markdown + PNG，HTML/PDF 可选）
+clawsqlite knowledge report-interest \
+  --db /path/to/knowledge.sqlite3 \
+  --days 7 \
+  --vec-dim 1024 \
+  --lang zh \
+  --format html \
+  --out-dir /path/to/reports
+```
+
+`report-interest` 会在 `--out-dir`（默认为当前目录下的 `./reports`）
+下创建一个按时间窗口结束日期命名的目录，例如
+`reports/20260331-report/`，其中至少包含：
+
+- `report.md`  – 报告正文（窗口内新增文章数、涉及兴趣簇数、每日新增、
+  按兴趣簇分布、簇心 PCA 图、升温/降温簇等）；
+- `images/`    – PNG 图表（`daily_articles.png` / `cluster_distribution.png`
+  / `interest_clusters_pca.png`）。
+
+如果环境中安装了 `pandoc`，且未显式加 `--no-pdf`，CLI 会在生成
+Markdown 后尝试：
+
+```bash
+pandoc report.md -o report.pdf
+```
+
+缺少 LaTeX 等依赖时，该步骤是“尽力而为”的：命令不会失败，只是目录中
+可能没有 `report.pdf`。
+
+当你传入 `--format html`，并且环境中有 `pandoc` 时，CLI 会在写出
+`report.md` 后尝试执行等价于：
+
+```bash
+pandoc report.md -s -o report.html --mathjax --self-contained
+```
+
+成功时会额外生成一个 `report.html`，包含内联图片的自包含 HTML 报告。
+
+需要注意的是：
+
+- 本 Skill 本身只暴露入库/检索/查看的 JSON API；
+- 兴趣簇构建与兴趣报告（`build-interest-clusters` /
+  `inspect-interest-clusters` / `report-interest`）目前仅通过底层
+  `clawsqlite` CLI 提供；
+- Skill 与 CLI 复用同一个知识库根目录，因此你可以一边用 Skill 做
+  日常 ingest/search，一边用 CLI 定期生成兴趣簇与周报。
