@@ -1,5 +1,5 @@
 name: clawsqlite-knowledge
-version: 0.1.12
+version: 0.1.13
 description: Knowledge base skill wrapping the clawsqlite knowledge CLI for ingest/search/maintenance.
 author: Ernest Yu
 license: MIT

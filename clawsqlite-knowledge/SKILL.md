@@ -1,7 +1,7 @@
 ---
 name: clawsqlite-knowledge
 description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/show.
-version: 0.1.12
+version: 0.1.13
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}}
 ---
 
@@ -12,7 +12,7 @@ metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags
 It is a **thin wrapper**:
 
 - it does not vendor the source code and does not git clone any repository;
-- during installation, it installs `clawsqlite>=0.1.7` (with a workspace-prefix fallback when the runtime env is not writable);
+- during installation, it installs `clawsqlite>=0.1.8` (with a workspace-prefix fallback when the runtime env is not writable);
 - during runtime, it operates the knowledge base only through the `clawsqlite knowledge ...` CLI.
 
 Its main capabilities are grouped into three areas:
@@ -79,7 +79,7 @@ install:
 `bootstrap_deps.py` is intentionally small and auditable. In simplified form:
 
 ```python
-requirement = "clawsqlite>=0.1.7"
+requirement = "clawsqlite>=0.1.8"
 cmd = [sys.executable, "-m", "pip", "install", requirement]
 proc = subprocess.run(cmd)
 if proc.returncode != 0:
@@ -96,7 +96,7 @@ if proc.returncode != 0:
 
 Semantics:
 
-- First, it tries to install `clawsqlite>=0.1.7` into the default venv used for
+- First, it tries to install `clawsqlite>=0.1.8` into the default venv used for
   the Skill runtime.
 - If that fails (e.g. read-only venv), it falls back to a **workspace-local
   prefix**:

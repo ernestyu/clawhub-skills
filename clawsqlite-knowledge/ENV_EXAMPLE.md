@@ -34,7 +34,7 @@ Below is a consolidated example of env vars that are relevant for
 #                             # if you change this, rebuild:
 #                             #   clawsqlite knowledge reindex --rebuild --fts
 
-# --- Tag generation & semantic rerank (clawsqlite>=0.1.7) ---
+# --- Tag generation & semantic rerank (clawsqlite>=0.1.8) ---
 # Controls how tags are generated from article content.
 #   auto (default): use TextRank/TF-IDF + optional semantic centrality when
 #                   embeddings + jieba are available; otherwise fall back to
@@ -44,7 +44,7 @@ Below is a consolidated example of env vars that are relevant for
 #   off: disable semantic rerank; always use non-semantic behavior.
 # CLAWSQLITE_TAGS_SEMANTIC=auto
 
-# --- Hybrid search score weights (clawsqlite>=0.1.7) ---
+# --- Hybrid search score weights (clawsqlite>=0.1.8) ---
 # Default weights inside clawsqlite are:
 #   0.55 for vector similarity
 #   0.25 for FTS (BM25) score
