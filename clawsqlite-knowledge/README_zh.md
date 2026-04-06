@@ -258,46 +258,39 @@ EOF)"$PYTHONPATH" \
 
 ### 4.3 `search`
 
-在知识库中检索。
+在知识库中检索，使用 `clawsqlite>=0.1.8` 提供的完整检索流水线：
+`query_refine/query_tags + FTS/vec hybrid`。
 
-底层调用的是 `clawsqlite knowledge search ...`，并继承了
-`clawsqlite>=0.1.8` 中的行为：
+底层调用的是 `clawsqlite knowledge search ... --json`，本 Skill 只负责
+转发参数和返回结果。
 
-- hybrid 检索：向量 + FTS 的混合模式，在 Embedding 或 vec0
-  不可用时自动退化为纯 FTS；
-- 标签感知打分：标签由 TextRank/TF‑IDF +（可选的）语义向心力生成，
-  并以 0..1 的得分参与最终排序。在 0.1.7 中，打分逻辑会：
+高层行为：
+
+- 查询会被拆成两部分：
+  - `query_refine`：更适合检索的一句话（由 Small LLM 或启发式生成）；
+  - `query_tags`：若干个关键词（数量由 `CLAWSQLITE_SEARCH_QUERY_TAG_MIN/MAX`
+    控制）。
+- 是否使用 Small LLM 和 Embedding，会决定内部的「能力模式」：
+  - Mode1（有 LLM + 有 Embedding）：用 LLM 生成 query_refine/query_tags，
+    打分时同时使用摘要/标签向量 + FTS + 标签字面匹配；
+  - Mode2（有 LLM + 无 Embedding）：用 LLM 生成 query_refine/query_tags，
+    打分时使用 FTS + 标签字面匹配；
+  - Mode3（无 LLM + 有 Embedding）：用启发式生成 query_refine/query_tags，
+    打分时使用摘要/标签向量 + FTS + 标签字面匹配；
+  - Mode4（无 LLM + 无 Embedding）：启发式 query_refine/query_tags +
+    FTS + 标签字面匹配。
+- 在有 Embedding 的模式下，打分逻辑会：
   - 将摘要与标签分别 embed 到 vec0 表（`articles_vec`、`articles_tag_vec`）中；
-  - 用 `1/(1+d)` + 以 0.5 为中心的 Logistic Sigmoid 归一化向量距离，让“真正相似”的条目得分明显高于一般相似；
+  - 用 `1/(1+d)` + 以 0.5 为中心的 Logistic Sigmoid 归一化向量距离；
   - 将标签通道拆成“标签语义得分（tag vector）”和“标签字面得分（tag lexical）”，拆分比例由 `CLAWSQLITE_TAG_VEC_FRACTION` 控制；
-  - 对标签字面得分应用可选的 log 压缩：`ln(1+αx)/ln(1+α)`，`α` 来自 `CLAWSQLITE_TAG_FTS_LOG_ALPHA`（默认 5.0），防止一堆弱命中压制语义得分；
-- 查询关键词抽取：自然语言问句会先经过与标签生成相同的
-  TextRank + 语义向心水平线抽取少量关键词，再喂给 FTS。
+  - 对标签字面得分应用可选的 log 压缩：`ln(1+αx)/ln(1+α)`，`α` 来自
+    `CLAWSQLITE_TAG_FTS_LOG_ALPHA`（默认 5.0），防止一堆弱命中压制语义得分。
+- 最终总分是 vec/fts/tag/priority/recency 多通道按权重线性组合，
+  不同模式的默认权重由 `CLAWSQLITE_SCORE_WEIGHTS_MODE1..4` 控制
+  （兼容旧的 `CLAWSQLITE_SCORE_WEIGHTS*`）。
 
-混合打分的权重可以通过 `CLAWSQLITE_SCORE_WEIGHTS` 环境变量进行微调，
-其中：
-- `vec`：摘要语义通道权重；
-- `fts`：全文 FTS 通道权重；
-- `tag`：标签通道总权重（再由 `CLAWSQLITE_TAG_VEC_FRACTION` 在“标签语义/标签字面”之间拆分）；
-- `priority` / `recency`：人工权重 + 时效权重。
-
-在中英文混合知识库场景下，一个常见配置是：
-
-```env
-CLAWSQLITE_SCORE_WEIGHTS=vec=0.30,fts=0.10,tag=0.55,priority=0.03,recency=0.02
-CLAWSQLITE_TAG_VEC_FRACTION=0.82
-CLAWSQLITE_TAG_FTS_LOG_ALPHA=5.0
-```
-
-对应大致贡献：
-
-- ~45% 标签语义；
-- ~30% 摘要语义；
-- ~10% 标签字面匹配；
-- ~10% 全文 FTS；
-- ~5% priority/recency。
-
-更多细节可参考 clawsqlite 仓库的 README/README_zh。
+更多细节可参考本目录的 `ENV_EXAMPLE.md` 与 clawsqlite 仓库的
+README/README_zh。
 
 **Payload 示例：**
 

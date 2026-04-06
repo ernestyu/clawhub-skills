@@ -1,7 +1,7 @@
 ---
 name: clawsqlite-knowledge
 description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/show.
-version: 0.1.13
+version: 0.1.14
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}}
 ---
 
@@ -21,9 +21,11 @@ Its main capabilities are grouped into three areas:
    - ingest from a URL (together with an existing fetch tool such as clawfetch);
    - ingest from a piece of text, an idea, or an excerpt (marked as a local source).
 2. **Retrieval**
-   - hybrid retrieval (hybrid / FTS / vec with automatic fallback)
+   - hybrid retrieval (LLM-aware query_refine/query_tags + FTS/vec with
+     automatic downgrade)
    - show a full record by id (including full content).
-3. **Reporting (via underlying CLI or JSON action)**
+3. **Reporting (via underlying CLI)**
+   - build interest clusters (summary/tag embeddings → interest topics)
    - generate periodic interest reports (Markdown + PNG, optional HTML/PDF)
      for the current knowledge base, based on previously built interest clusters.
 
@@ -239,7 +241,9 @@ Ingest a piece of text, an idea, or an excerpt, marked as a local source.
 
 ### 3. `search`
 
-Search the knowledge base by keyword, vector, or hybrid retrieval.
+Search the knowledge base using the full `clawsqlite>=0.1.8` search
+pipeline (query_refine/query_tags + FTS/vec hybrid), with automatic
+downgrade when embeddings or vec0 are not available.
 
 **Example payload:**
 
@@ -256,15 +260,36 @@ Search the knowledge base by keyword, vector, or hybrid retrieval.
 }
 ```
 
-**Behavior:**
+**Behavior (high level):**
 
-- calls `clawsqlite knowledge search ...`;
-- when embeddings are enabled and the vec table exists, `mode=hybrid` combines
-  vector search and FTS;
-- when embeddings are not enabled, `mode=hybrid` automatically falls back to
-  pure FTS;
-- supports filtering by `category` / `tag`, and whether to include
-  soft-deleted records.
+- Calls `clawsqlite knowledge search ...` with `--json` and forwards filters.
+- Uses the new four-mode capability model inside clawsqlite:
+  - Mode1: LLM + Embedding → query_refine + query_tags from SMALL_LLM,
+    content/tag vectors + FTS + lexical tags.
+  - Mode2: LLM + no Embedding → LLM-based query_refine/query_tags + FTS +
+    lexical tags.
+  - Mode3: no LLM + Embedding → heuristic query_refine/query_tags + content
+    vectors + tag vectors + FTS/lexical tags.
+  - Mode4: no LLM + no Embedding → heuristic query_refine/query_tags + FTS +
+    lexical tags only.
+- In all modes, natural-language queries are converted into:
+  - `query_refine`: a single, search-friendly sentence;
+  - `query_tags`: a small set of keywords (length controlled by
+    `CLAWSQLITE_SEARCH_QUERY_TAG_MIN/MAX`).
+- When embeddings are available, the search scorer uses:
+  - content vectors (summary-based) for semantic similarity;
+  - tag vectors + lexical tag matches as a tag channel;
+  - FTS rank for BM25-like keyword matching;
+  - priority and recency as light biases.
+- Tag scoring is split into semantic and lexical parts, controlled by
+  `CLAWSQLITE_TAG_VEC_FRACTION` and `CLAWSQLITE_TAG_FTS_LOG_ALPHA`.
+- Final scores are a weighted sum of these channels, with per-mode default
+  weights tunable via `CLAWSQLITE_SCORE_WEIGHTS_MODE1..4` (and legacy
+  `CLAWSQLITE_SCORE_WEIGHTS*`).
+
+This skill does **not** re-implement scoring; it simply forwards the JSON
+result and lets agents inspect `score`, `score_components`, and any
+`next` hints surfaced by the underlying CLI.
 
 **Returns:**
 

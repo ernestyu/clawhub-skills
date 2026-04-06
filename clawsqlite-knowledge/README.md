@@ -267,31 +267,38 @@ The underlying `clawsqlite knowledge ingest --text ...` call will:
 
 ### 4.3 `search`
 
-Search the knowledge base.
+Search the knowledge base using the new `clawsqlite>=0.1.8` search
+pipeline (LLM-aware query_refine/query_tags + FTS/vec hybrid).
 
-Under the hood this calls `clawsqlite knowledge search ...` with:
+Under the hood this calls `clawsqlite knowledge search ... --json` and
+forwards filters, then surfaces the structured results.
 
-- hybrid retrieval: vector + FTS, with automatic downgrade when
-  embeddings or vec0 are not available;
-- tag‑aware scoring: tags are generated from article content via
-  TextRank/TF‑IDF + optional semantic rerank (when embeddings + jieba are
-  available) and used as an extra signal in the final score. In
-  clawsqlite>=0.1.8, the scorer embeds both summary and tags into vec0
-  tables, normalizes vector distances via a logistic sigmoid over
-  `1/(1+d)`, and splits the tag channel into semantic (vector) and
-  lexical (FTS) parts; lexical tag scores can be log-compressed via
-  `CLAWSQLITE_TAG_FTS_LOG_ALPHA` so partial hits do not dominate;
-- query keyword extraction: natural‑language queries are converted to a
-  small set of keywords using the same heuristics as tag generation
-  (TextRank + optional semantic centrality), then normalized for FTS.
+High-level behavior:
 
-You can further tune the hybrid scoring behavior via:
-
-- `CLAWSQLITE_SCORE_WEIGHTS` (overall vec/fts/tag/priority/recency weights);
-- `CLAWSQLITE_TAG_VEC_FRACTION` (split of the tag channel between
-  semantic tag vectors and lexical tag match);
-- `CLAWSQLITE_TAG_FTS_LOG_ALPHA` (strength of log compression applied to
-  lexical tag scores).
+- Queries are split into:
+  - `query_refine`: a search-friendly sentence (LLM or heuristic);
+  - `query_tags`: a small set of keywords (length controlled by
+    `CLAWSQLITE_SEARCH_QUERY_TAG_MIN/MAX`).
+- Capability modes are decided by whether embeddings and SMALL_LLM are
+  available:
+  - Mode1 (LLM + Embedding): LLM builds query_refine/query_tags, then the
+    scorer uses content/tag vectors + FTS + lexical tags.
+  - Mode2 (LLM + no Embedding): LLM builds query_refine/query_tags, then
+    the scorer uses FTS + lexical tags only.
+  - Mode3 (no LLM + Embedding): heuristic query_refine/query_tags,
+    content/tag vectors + FTS + lexical tags.
+  - Mode4 (no LLM + no Embedding): heuristic query_refine/query_tags,
+    FTS + lexical tags only.
+- When embeddings are enabled, the scorer:
+  - embeds both summary and tags into vec0 tables;
+  - normalizes vector distances via a logistic sigmoid over `1/(1+d)`;
+  - splits the tag channel into semantic (vector) and lexical (FTS)
+    parts, controlled by `CLAWSQLITE_TAG_VEC_FRACTION` and
+    `CLAWSQLITE_TAG_FTS_LOG_ALPHA`.
+- Final scores are a weighted sum of vec/fts/tag/priority/recency
+  channels. Per-mode default weights are controlled by
+  `CLAWSQLITE_SCORE_WEIGHTS_MODE1..4` (and legacy
+  `CLAWSQLITE_SCORE_WEIGHTS*`).
 
 See `ENV_EXAMPLE.md` and the underlying `clawsqlite` README for details
 and recommended values for mixed Chinese/English knowledge bases.
