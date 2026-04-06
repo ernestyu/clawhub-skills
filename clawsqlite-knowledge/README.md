@@ -81,7 +81,7 @@ At this point you only have:
 
 > **Important:** After Stage 1, the skill shell is present, but the underlying
 > `clawsqlite` CLI may still be missing or outdated. Stage 2 ensures
-> `clawsqlite>=0.1.8` is available in the runtime Python environment.
+> `clawsqlite>=1.0.0` is available in the runtime Python environment.
 
 ### 2.2 Stage 2 — install or upgrade `clawsqlite` (PyPI, v0.1.7)
 
@@ -99,7 +99,7 @@ install:
 The script content (simplified) is:
 
 ```python
-requirement = "clawsqlite>=0.1.8"
+requirement = "clawsqlite>=1.0.0"
 cmd = [sys.executable, "-m", "pip", "install", requirement]
 proc = subprocess.run(cmd)
 if proc.returncode != 0:
@@ -116,7 +116,7 @@ if proc.returncode != 0:
 
 This means:
 
-- It first tries to install `clawsqlite>=0.1.8` into the default Python
+- It first tries to install `clawsqlite>=1.0.0` into the default Python
   environment used by the skill runtime;
 - If that environment is read‑only (or `pip install` fails), it falls back to a
   **workspace‑local prefix** under:
@@ -144,13 +144,13 @@ openclaw skills install clawsqlite-knowledge  # re-runs the install hooks
 
 > **Note:** This skill **never** vendors `clawsqlite` source code or clones the
 > GitHub repo. The only way it brings in code is via `pip install
-> "clawsqlite>=0.1.8"`.
+> "clawsqlite>=1.0.0"`.
 
 ### 2.3 Where is the `clawsqlite` CLI installed?
 
 Depending on your environment:
 
-- If `pip install clawsqlite>=0.1.8` succeeds in the base runtime venv, the
+- If `pip install clawsqlite>=1.0.0` succeeds in the base runtime venv, the
   `clawsqlite` entrypoint will live in that venv’s `bin` directory and be
   importable as the `clawsqlite_cli` module.
 - If the bootstrap falls back to the workspace prefix,
@@ -260,14 +260,14 @@ This is the path for:
 The underlying `clawsqlite knowledge ingest --text ...` call will:
 
 - Generate a long summary (up to ~800 characters, soft‑truncated)
-- Extract tags using jieba/heuristics (in clawsqlite>=0.1.8 these reuse the
+- Extract tags using jieba/heuristics (in clawsqlite>=1.0.0 these reuse the
   same TextRank/semantic pipelines as the query‑side keyword extraction)
 - Optionally embed the summary (when embedding is configured)
 - Store a markdown file with a pinyin/ASCII slug filename
 
 ### 4.3 `search`
 
-Search the knowledge base using the new `clawsqlite>=0.1.8` search
+Search the knowledge base using the new `clawsqlite>=1.0.0` search
 pipeline (LLM-aware query_refine/query_tags + FTS/vec hybrid).
 
 Under the hood this calls `clawsqlite knowledge search ... --json` and
@@ -413,9 +413,9 @@ See the `clawsqlite` README for the full behavior and env matrix.
 
 ---
 
-## 7. Upgrade notes (clawsqlite>=0.1.8)
+## 7. Upgrade notes (clawsqlite>=1.0.0)
 
-- This Skill now depends on `clawsqlite>=0.1.8`; updates will install the new PyPI version via `bootstrap_deps.py`.
+- This Skill now depends on `clawsqlite>=1.0.0`; updates will install the new PyPI version via `bootstrap_deps.py`.
 - In OpenClaw, a typical rollout is: `openclaw skills update clawsqlite-knowledge`, then rebuild FTS if you changed `CLAWSQLITE_FTS_JIEBA`.
 
 ## 8. Interest clusters & weekly reports (via underlying clawsqlite CLI)
