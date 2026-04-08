@@ -196,16 +196,10 @@ clawfeedradar and clawsqlite, which both support project‑level
 In OpenClaw you typically configure env vars on the agent or host so
 both the skill and direct CLI usage see the same environment.
 
-See `ENV_EXAMPLE.md` for a consolidated list of env vars that matter to
-this skill, including:
-
-- `CLAWSQLITE_ROOT` / `CLAWSQLITE_DB`
-- `EMBEDDING_*` / `CLAWSQLITE_VEC_DIM`
-- `CLAWFEEDRADAR_OUTPUT_DIR`
-- `CLAWFEEDRADAR_SCRAPE_CMD` / workers
-- `CLAWFEEDRADAR_INTEREST_SIGMOID_K` / recency / popularity weights
-- `SMALL_LLM_*` and `CLAWFEEDRADAR_LLM_*` for preview & bilingual body
-- git publish settings for GitHub/Gitee Pages
+See the upstream `ENV.example` and `README` in the `clawfeedradar`
+project for the authoritative list of env vars and recommended values.
+Do **not** create a `.env` inside this skill directory; configure env on
+the agent/host or in the upstream CLI project instead.
 
 ---
 

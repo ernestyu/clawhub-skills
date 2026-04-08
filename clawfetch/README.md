@@ -242,7 +242,8 @@ browser scraping, but for most cases the feed-based path is more stable.
 
 ## 4. Dependencies and behaviour around missing deps
 
-The skill itself never calls `npm` at runtime. All dependency management is:
+The skill itself never calls `npm` at runtime beyond the one-time
+bootstrap. All dependency management is:
 
 - One-time `npm install clawfetch@0.1.7` in `bootstrap_deps.sh`.
 - At run time, **only the `clawfetch` CLI** is allowed to decide what to do.
@@ -254,7 +255,8 @@ Inside the CLI, `clawfetch` uses `require()` checks for:
 - `jsdom`
 - `turndown`
 
-If these packages are missing **and `--auto-install` is not used**:
+If these packages are missing **and `--auto-install` is not used** (in
+the upstream CLI, not inside this skill):
 
 - It prints a clear list of missing packages;
 - It prints recommended `npm install` commands (global or local);
@@ -267,7 +269,9 @@ If `--auto-install` is passed:
 - On failure it prints `NEXT:` hints and exits.
 
 The skill does **not** perform any implicit installs beyond the initial
-`bootstrap_deps.sh` hook.
+`bootstrap_deps.sh` hook. Do **not** create a `.env` inside the skill
+folder; configure env on the agent/host or in the upstream `clawfetch`
+project instead.
 
 ---
 

@@ -300,8 +300,11 @@ High-level behavior:
   `CLAWSQLITE_SCORE_WEIGHTS_MODE1..4` (and legacy
   `CLAWSQLITE_SCORE_WEIGHTS*`).
 
-See `ENV_EXAMPLE.md` and the underlying `clawsqlite` README for details
-and recommended values for mixed Chinese/English knowledge bases.
+See the upstream `ENV.example` and `README` in the `clawsqlite`
+project root for details and recommended values for mixed
+Chinese/English knowledge bases. Do **not** create a `.env` inside this
+skill directory; configure env on the agent/host or in the upstream
+project instead.
 
 **Payload example:**
 
