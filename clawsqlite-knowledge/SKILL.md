@@ -1,7 +1,7 @@
 ---
 name: clawsqlite-knowledge
 description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/show.
-version: 1.0.0
+version: 1.0.2
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"},"first_run":{"summary":"Before relying on this skill, run `clawsqlite knowledge doctor --json` once to check knowledge DB paths, vec0/embedding, and small LLM configuration.","steps":[{"id":"run_doctor","kind":"manual","label":"Run clawsqlite knowledge doctor","command":"clawsqlite knowledge doctor --json","notes":"Inspect the JSON report and address any missing paths (CLAWSQLITE_ROOT/DB), vec0/vec index issues, or incomplete EMBEDDING_* / SMALL_LLM_* settings before using this skill in production agents."}]}}}
 ---
 
@@ -12,7 +12,7 @@ metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags
 It is a **thin wrapper**:
 
 - it does not vendor the source code and does not git clone any repository;
-- during installation, it installs `clawsqlite>=1.0.0` (with a workspace-prefix fallback when the runtime env is not writable);
+- during installation, it installs `clawsqlite>=1.0.2` (with a workspace-prefix fallback when the runtime env is not writable);
 - during runtime, it operates the knowledge base only through the `clawsqlite knowledge ...` CLI.
 
 Its main capabilities are grouped into three areas:
@@ -81,7 +81,7 @@ install:
 `bootstrap_deps.py` is intentionally small and auditable. In simplified form:
 
 ```python
-requirement = "clawsqlite>=1.0.0"
+requirement = "clawsqlite>=1.0.2"
 cmd = [sys.executable, "-m", "pip", "install", requirement]
 proc = subprocess.run(cmd)
 if proc.returncode != 0:
@@ -98,7 +98,7 @@ if proc.returncode != 0:
 
 Semantics:
 
-- First, it tries to install `clawsqlite>=1.0.0` into the default venv used for
+- First, it tries to install `clawsqlite>=1.0.2` into the default venv used for
   the Skill runtime.
 - If that fails (e.g. read-only venv), it falls back to a **workspace-local
   prefix**:
@@ -241,7 +241,7 @@ Ingest a piece of text, an idea, or an excerpt, marked as a local source.
 
 ### 3. `search`
 
-Search the knowledge base using the full `clawsqlite>=1.0.0` search
+Search the knowledge base using the full `clawsqlite>=1.0.2` search
 pipeline (query_refine/query_tags + FTS/vec hybrid), with automatic
 downgrade when embeddings or vec0 are not available.
 

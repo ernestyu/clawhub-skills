@@ -1,7 +1,7 @@
 ---
 name: clawhealth-garmin
 description: Lightweight Garmin Connect skill that uses the clawhealth Python package to sync health data into local SQLite and expose JSON-friendly commands for OpenClaw.
-version: 0.1.7
+version: 0.1.8
 metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawhealth","tags":["health","garmin","sqlite","cli"],"requires":{"bins":["python3"],"anyBins":["python"],"env":["CLAWHEALTH_GARMIN_USERNAME","CLAWHEALTH_GARMIN_PASSWORD_FILE","CLAWHEALTH_DB","CLAWHEALTH_CONFIG_DIR"],"primaryEnv":"CLAWHEALTH_GARMIN_PASSWORD_FILE"},"install":[{"id":"clawhealth_pip","kind":"shell","label":"Install clawhealth from PyPI into a local .venv","script":"set -e && cd {baseDir} && python bootstrap_deps.py"}]}}
 ---
 
