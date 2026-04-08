@@ -2,7 +2,7 @@
 name: clawsqlite-knowledge
 description: Knowledge base skill that wraps the clawsqlite knowledge CLI for ingest/search/show.
 version: 1.0.0
-metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"}}}
+metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawsqlite","tags":["knowledge","sqlite","search","cli"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawsqlite_knowledge_bootstrap","kind":"python","label":"Install clawsqlite from PyPI","script":"bootstrap_deps.py"}],"runtime":{"entry":"run_clawknowledge.py"},"first_run":{"summary":"Before relying on this skill, run `clawsqlite knowledge doctor --json` once to check knowledge DB paths, vec0/embedding, and small LLM configuration.","steps":[{"id":"run_doctor","kind":"manual","label":"Run clawsqlite knowledge doctor","command":"clawsqlite knowledge doctor --json","notes":"Inspect the JSON report and address any missing paths (CLAWSQLITE_ROOT/DB), vec0/vec index issues, or incomplete EMBEDDING_* / SMALL_LLM_* settings before using this skill in production agents."}]}}}
 ---
 
 # clawsqlite-knowledge (OpenClaw Skill)

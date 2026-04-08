@@ -17,6 +17,20 @@ All heavy lifting (schema, indexing, embedding, maintenance) is implemented
 in the `clawsqlite` PyPI package. This skill is just a thin, auditable
 wrapper.
 
+For environment sanity checks (paths, vec0, embedding, small LLM), the
+underlying CLI now exposes a `doctor` subcommand:
+
+```bash
+# Installed via PyPI
+clawsqlite knowledge doctor --json
+
+# From source (inside the repo) without installing the wheel
+python -m clawsqlite_knowledge.cli doctor
+```
+
+It is strongly recommended to run `clawsqlite knowledge doctor` once when
+setting up a new environment or troubleshooting search/embedding behavior.
+
 > If you need full control over `clawsqlite` (plumbing commands, custom
 > tables, advanced CLIs), use the Python package and CLI directly instead of
 > this skill.
@@ -34,7 +48,8 @@ wrapper.
   - Lives under `clawhub-skills/clawsqlite-knowledge`.
   - Installed inside the ClawHub/OpenClaw environment as a skill.
   - Depends on `clawsqlite` via PyPI (no vendored source, no git clone).
-  - Exposes a **small JSON API** over stdin/stdout:
+  - Exposes a **small JSON API** over stdin/stdout (and expects
+    `clawsqlite knowledge doctor` to be available in the environment):
     - `ingest_url`
     - `ingest_text`
     - `search`
@@ -206,7 +221,28 @@ All handlers return a JSON object with at least:
 
 ---
 
-## 4. Supported actions
+## 4. Recommended first step: run `doctor`
+
+Before using this skill in a new environment, it is recommended that an
+agent or human operator first run the underlying doctor command and
+inspect the report:
+
+```bash
+clawsqlite knowledge doctor --json
+```
+
+This checks:
+
+- CLAWSQLITE_ROOT / CLAWSQLITE_DB paths (do they exist?)
+- sqlite-vec extension and vec tables (vec0/vec index availability)
+- Embedding configuration (EMBEDDING_* + CLAWSQLITE_VEC_DIM)
+- Small LLM configuration (SMALL_LLM_* triple)
+- Overall capability mode (LLM+Embedding / LLM-only / Embedding-only / FTS-only)
+
+Agents can use this report to decide which search modes to enable (fts vs
+hybrid/vec), and whether to surface NEXT hints to the user.
+
+## 5. Supported actions
 
 ### 4.1 `ingest_url`
 

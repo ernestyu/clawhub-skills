@@ -17,6 +17,20 @@
 `clawsqlite` 实现。`clawsqlite-knowledge` 只是一个薄薄的 JSON 封装，
 让 Agent 调用更方便、更安全。
 
+为了让环境更透明可检查，底层 CLI 提供了一个 `doctor` 子命令，用于
+自检当前知识库配置（路径、vec0、embedding、小模型等）：
+
+```bash
+# 通过 PyPI 安装后
+clawsqlite knowledge doctor --json
+
+# 在源码目录下（未安装 wheel 时）
+python -m clawsqlite_knowledge.cli doctor
+```
+
+建议在新环境首次配置 clawsqlite 时先跑一遍 `clawsqlite knowledge doctor`
+看一下报告，再开始正常使用知识库和 Skill。
+
 > 如果你需要完全控制 clawsqlite 的所有能力（包括 plumbing 命令、
 > 自己的表、复杂流水线），应该直接使用 `clawsqlite` 包和 CLI，
 > 而不是这个 Skill。
@@ -34,7 +48,8 @@
   - 代码目录：`clawhub-skills/clawsqlite-knowledge`；
   - 由 ClawHub 安装并运行；
   - 依赖 PyPI 上的 `clawsqlite>=1.0.0` 包（不 vendor 源码，不 git clone）；
-  - 对外暴露一个小而精的 JSON API：
+  - 对外暴露一个小而精的 JSON API（并假定环境中可以运行
+    `clawsqlite knowledge doctor` 做自检）：
     - `ingest_url`
     - `ingest_text`
     - `search`
@@ -196,7 +211,33 @@ EOF)"$PYTHONPATH" \
 
 ---
 
-## 4. 支持的 actions
+## 4. 推荐的第一步：先跑一次 `doctor`
+
+在一个全新的环境里启用这个 Skill 之前，强烈建议先用底层 CLI 跑一遍
+自检命令，看看当前环境处于哪种能力模式：
+
+```bash
+clawsqlite knowledge doctor --json
+```
+
+报告会检查：
+
+- CLAWSQLITE_ROOT / CLAWSQLITE_DB（路径是否存在）；
+- sqlite-vec 扩展和向量表（vec0 / vec 索引是否可用）；
+- Embedding 配置（EMBEDDING_* + CLAWSQLITE_VEC_DIM 是否完整）；
+- 小模型配置（SMALL_LLM_* 三元组是否完整）；
+- 当前整体属于哪种能力模式：
+  - LLM + Embedding
+  - LLM + 无 Embedding
+  - 无 LLM + Embedding
+  - 无 LLM + 无 Embedding（纯 FTS）
+
+Agent 可以根据这份报告决定：
+
+- 默认使用 `mode=fts` 还是 `mode=hybrid/vec`；
+- 在能力缺失时是否向用户输出 NEXT 提示，指导补齐配置。
+
+## 5. 支持的 actions
 
 ### 4.1 `ingest_url`
 
