@@ -38,8 +38,8 @@ def main() -> int:
         print("[clawhealth-garmin] Creating venv at", venv_dir)
         venv.EnvBuilder(with_pip=True).create(venv_dir)
 
-    print("[clawhealth-garmin] Installing dependencies:", ", ".join(REQS))
-    _run([str(vpy), "-m", "pip", "install", *REQS])
+    print("[clawhealth-garmin] Installing/upgrading dependencies:", ", ".join(REQS))
+    _run([str(vpy), "-m", "pip", "install", "--upgrade", *REQS])
 
     print("[clawhealth-garmin] OK: clawhealth installed in .venv.")
     print("[clawhealth-garmin] The skill entrypoint (run_clawhealth.py) will use the installed CLI.")
