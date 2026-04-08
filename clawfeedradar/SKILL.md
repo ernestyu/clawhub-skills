@@ -79,6 +79,11 @@ This will create:
   └── ENV_EXAMPLE.md
 ```
 
+> Note: this skill does **not** read an `.env` inside the skill
+> directory. All configuration lives in the upstream `clawfeedradar`
+> project (or at the agent/host level), and the skill simply reuses that
+> environment.
+
 The actual Python package `clawfeedradar` is installed by the bootstrap
 script, **not** vendored here.
 

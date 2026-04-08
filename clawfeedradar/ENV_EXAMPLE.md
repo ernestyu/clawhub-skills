@@ -4,7 +4,7 @@ This file lists environment variables that are relevant when using the
 `clawfeedradar` skill. The skill itself does not read a `.env` file
 inside its own directory; instead it relies on the upstream
 `clawfeedradar` and `clawsqlite` CLIs, which both support project‑level
-`.env`.
+`.env` under the **upstream project root**, not inside this skill.
 
 In OpenClaw/ClawHub deployments you typically configure these env vars
 on the **agent** (or host) so that:
