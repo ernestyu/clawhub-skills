@@ -2,7 +2,7 @@
 name: clawfeedradar
 description: Personal "news radar" skill built on top of a clawsqlite knowledge base and its interest clusters.
 version: 0.1.0
-metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawfeedradar","tags":["news","rss","recommendation","clawsqlite"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawfeedradar_bootstrap","kind":"bash","label":"Install clawfeedradar Python package","script":"bootstrap_deps.sh"}],"runtime":{"entry":"run_clawfeedradar.py"}}}}
+metadata: {"openclaw":{"homepage":"https://github.com/ernestyu/clawfeedradar","tags":["news","rss","recommendation","clawsqlite"],"requires":{"bins":["python"],"env":[]},"install":[{"id":"clawfeedradar_bootstrap","kind":"bash","label":"Install clawfeedradar Python package","script":"bootstrap_deps.sh"}],"runtime":{"entry":"run_clawfeedradar.py"}}}
 ---
 
 # clawfeedradar (OpenClaw Skill)
